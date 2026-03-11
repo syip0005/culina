@@ -7,6 +7,7 @@ class AppSecrets(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     OPENROUTER_API_KEY: str
+    EXA_API_KEY: str
 
 
 class AiSettings(BaseSettings):
@@ -19,3 +20,7 @@ class AiSettings(BaseSettings):
     @classmethod
     def settings_customise_sources(cls, settings_cls, **kwargs):
         return (YamlConfigSettingsSource(settings_cls),)
+
+
+secrets = AppSecrets()  # type: ignore[call-arg]
+ai_settings = AiSettings()  # type: ignore[call-arg]

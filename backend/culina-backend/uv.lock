@@ -506,7 +506,9 @@ name = "culina-backend"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "exa-py" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
     { name = "pydantic-settings" },
@@ -520,7 +522,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "exa-py", specifier = ">=1.0.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.135.1" },
+    { name = "httpx", specifier = ">=0.28.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pydantic-ai", specifier = ">=1.67.0" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
@@ -601,6 +605,24 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/fb/a3/cafafb4558fd638aadfe4121dc6cefb8d743368c085acb2f521df0f3d9d7/eval_type_backport-0.3.1.tar.gz", hash = "sha256:57e993f7b5b69d271e37482e62f74e76a0276c82490cf8e4f0dffeb6b332d5ed", size = 9445, upload-time = "2025-12-02T11:51:42.987Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cf/22/fdc2e30d43ff853720042fa15baa3e6122722be1a7950a98233ebb55cd71/eval_type_backport-0.3.1-py3-none-any.whl", hash = "sha256:279ab641905e9f11129f56a8a78f493518515b83402b860f6f06dd7c011fdfa8", size = 6063, upload-time = "2025-12-02T11:51:41.665Z" },
+]
+
+[[package]]
+name = "exa-py"
+version = "2.8.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpcore" },
+    { name = "httpx" },
+    { name = "openai" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "requests" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/65/98/cb2974bd830b5b4483900f85766a6ac10359d09accf3ea43ba20c891dc0d/exa_py-2.8.1.tar.gz", hash = "sha256:7497916ea56d344e66b101c09238baef7bee2f3d3411213bde1a3c35484cf2ef", size = 50086, upload-time = "2026-03-10T23:24:47.354Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/a6/8a6e5ee0274fbe268b83e567944dfb3273ae5ed750aaaadaaa7143dce2a1/exa_py-2.8.1-py3-none-any.whl", hash = "sha256:e2834c082355dee93ed3eeb60ed6e9c36cc9f4105f3f3bde9f11cf77ff4dbac0", size = 64898, upload-time = "2026-03-10T23:24:45.589Z" },
 ]
 
 [[package]]
