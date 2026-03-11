@@ -1,0 +1,6 @@
+- Incorporate AFCD information, with search functionality.
+- Find general alternatives if AFCD information isn't enough (FatSecret?)
+- Design for database for users, cached products (Redis?)
+- Routes
+- Auth
+- Evals for AI
