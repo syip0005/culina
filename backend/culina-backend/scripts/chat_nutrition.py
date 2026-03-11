@@ -2,15 +2,16 @@
 
 import asyncio
 
+from culina_backend.ai.model.follow_up import FollowUpQuestion
 from culina_backend.ai.search import NutritionSearch
 from culina_backend.model import (
-    NutritionInfo,
+    SearchNutritionInfo,
     SearchNutritionNotFound,
     SearchNutritionResult,
 )
 
 
-def _print_info(item: NutritionInfo, prefix: str = "") -> None:
+def _print_info(item: SearchNutritionInfo, prefix: str = "") -> None:
     print(f"\n  {prefix}{item.food_item}")
     print(f"  Serving:  {item.serving_size}")
     print(f"  Energy:   {item.energy_kj:.0f} kJ")
@@ -58,20 +59,24 @@ async def main() -> None:
 
             for i, item in enumerate(result.items, 1):
                 prefix = f"[{i}/{len(result.items)}] " if multi else ""
-                if isinstance(item, NutritionInfo):
+                if isinstance(item, SearchNutritionInfo):
                     _print_info(item, prefix)
                 else:
                     _print_not_found(item, prefix)
 
-            found = [it for it in result.items if isinstance(it, NutritionInfo)]
+            found = [it for it in result.items if isinstance(it, SearchNutritionInfo)]
             if multi and found:
                 print("\n  --- Total (found items only) ---")
                 print(f"  Energy:   {sum(it.energy_kj for it in found):.0f} kJ")
                 print(f"  Protein:  {sum(it.protein_g for it in found):.1f} g")
                 print(f"  Fat:      {sum(it.fat_g for it in found):.1f} g")
                 print(f"  Carbs:    {sum(it.carbs_g for it in found):.1f} g")
-        else:
-            print(f"\n  {result}")
+        elif isinstance(result, FollowUpQuestion):
+            print(f"\n  {result.follow_up_question}")
+            if result.follow_up_buttons:
+                print("  Options:")
+                for btn in result.follow_up_buttons:
+                    print(f"    - {btn}")
 
         print()
 
