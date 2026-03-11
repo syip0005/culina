@@ -4,6 +4,6 @@ description: Adds, commits and pushes logically.
 ---
 
 1. Group logically then `git add`.
-2. Commit piece by piece.
+2. Commit piece by piece. Use semantic commit messages.
 3. Finally push.
 
