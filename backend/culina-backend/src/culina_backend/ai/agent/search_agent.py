@@ -4,6 +4,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openrouter import OpenRouterModel, OpenRouterModelSettings
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
+from culina_backend.ai.model.follow_up import FollowUpQuestion
 from culina_backend.ai.tool import create_exa_toolset, kcal_to_kj
 from culina_backend.config import ai_settings, secrets
 from culina_backend.model import SearchNutritionResult
@@ -15,7 +16,12 @@ When given a food item (e.g. "McDonald's medium McChicken meal", "Guzman y Gomez
 
 1. If the request is ambiguous (e.g. unclear size, combo vs item alone, could refer to
    multiple menu items), ask the user a short clarifying question instead of guessing.
-   Return the question as plain text.
+   Return a `FollowUpQuestion` with:
+   - `follow_up_question`: the clarifying question text
+   - `follow_up_buttons`: a list of short button labels representing the most likely
+     answers (e.g. ["Small", "Medium", "Large"]). Omit or leave empty when the answer
+     is too open-ended for predefined choices.
+   Results have to be either `NutritionInfo` or `NutritionNotFound`
 2. **Decompose non-standard or customised orders into individually searchable components.**
    For example "GYG ground beef bowl with extra beef" should become two lookups:
    one for the standard GYG ground beef bowl, and one for an extra serve of ground beef.
@@ -47,9 +53,9 @@ _model_settings = OpenRouterModelSettings(
     openrouter_reasoning={"effort": "low"},
 )
 
-search_agent: Agent[None, SearchNutritionResult | str] = Agent(
+search_agent: Agent[None, SearchNutritionResult | FollowUpQuestion] = Agent(
     _model,
-    output_type=[SearchNutritionResult, str],  # type: ignore[arg-type]
+    output_type=[SearchNutritionResult, FollowUpQuestion],  # type: ignore[arg-type]
     tools=[kcal_to_kj],
     toolsets=[create_exa_toolset(secrets.EXA_API_KEY)],
     system_prompt=SYSTEM_PROMPT,

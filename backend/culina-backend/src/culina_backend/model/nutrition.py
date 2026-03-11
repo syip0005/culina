@@ -9,6 +9,9 @@ class SearchNutritionInfo(BaseModel):
     food_item: str
     """Resolved name of the food item."""
 
+    brand: str
+    """Brand of food if relevant."""
+
     source_url: str
     """Primary source URL for the nutritional data."""
 
