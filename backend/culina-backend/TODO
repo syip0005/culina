@@ -1,5 +1,7 @@
 - Incorporate AFCD information, with search functionality.
 - Find general alternatives if AFCD information isn't enough (FatSecret?)
+- Passive macro understanding from photos, predictions? (based on previous eating history, time of day)
+- Macro trajectory prediction
 - Design for database for users, cached products (Redis?)
 - Routes
 - Auth
