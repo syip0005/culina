@@ -1,4 +1,4 @@
-"""Process AFCD Nutrient Excel file into a JSON array of NutritionInfo entries."""
+"""Process AFCD Nutrient Excel file into a JSON array of NutritionEntry entries."""
 
 import json
 import sys
@@ -10,7 +10,8 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from culina_backend.model.nutrition import NutritionInfo, NutritionSource  # noqa: E402
+from culina_backend.model.nutrition import NutritionSource  # noqa: E402
+from culina_backend.model.user_nutrition import SYSTEM_USER_ID, NutritionEntry  # noqa: E402
 
 DATA_DIR = PROJECT_ROOT / "data" / "afcd"
 NUTRIENT_FILE = DATA_DIR / "AFCD Release 3 - Nutrient profiles.xlsx"
@@ -26,6 +27,7 @@ AFCD_SOURCE_URL = (
 
 # Column mapping: Excel column name → our field name
 COLUMN_MAP = {
+    "Public Food Key": "afcd_food_key",
     "Food Name": "food_item",
     "Energy with dietary fibre, equated \n(kJ)": "energy_kj",
     "Protein \n(g)": "protein_g",
@@ -66,10 +68,11 @@ def main() -> None:
     df = df.dropna(subset=numeric_cols)
     print(f"Dropped {before - len(df)} rows with missing macros ({len(df)} remaining)")
 
-    # Build NutritionInfo entries
+    # Build NutritionEntry entries
     entries: list[dict] = []
     for _, row in df.iterrows():
-        info = NutritionInfo(
+        entry = NutritionEntry(
+            user_id=SYSTEM_USER_ID,
             food_item=str(row["food_item"]).strip(),
             brand="",
             source_url=AFCD_SOURCE_URL,
@@ -79,8 +82,11 @@ def main() -> None:
             fat_g=round(float(row["fat_g"]), 1),
             carbs_g=round(float(row["carbs_g"]), 1),
             source=NutritionSource.afcd,
+            afcd_food_key=str(row["afcd_food_key"]).strip()
+            if pd.notna(row["afcd_food_key"])
+            else None,
         )
-        entries.append(info.model_dump(mode="json"))
+        entries.append(entry.model_dump(mode="json"))
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_FILE.write_text(json.dumps(entries, indent=2, ensure_ascii=False))
