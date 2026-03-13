@@ -3,9 +3,14 @@ from culina_backend.model.nutrition import (
     SearchNutritionNotFound,
     SearchNutritionResult,
 )
+from culina_backend.model.user_nutrition import (
+    SYSTEM_USER_ID,
+    NutritionEntry,
+)
 
 __all__ = [
-    "SearchNutritionInfo",
+    "SYSTEM_USER_ID",
+    "NutritionEntry",
     "SearchNutritionInfo",
     "SearchNutritionNotFound",
     "SearchNutritionResult",
