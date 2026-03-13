@@ -1,6 +1,15 @@
 from datetime import date, datetime, timezone
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
+
+
+class NutritionSource(StrEnum):
+    """Where the nutrition data originated."""
+
+    afcd = "afcd"
+    search = "search"
+    manual = "manual"
 
 
 class SearchNutritionInfo(BaseModel):
@@ -29,6 +38,9 @@ class SearchNutritionInfo(BaseModel):
 
     carbs_g: float
     """Total carbohydrates in grams."""
+
+    source: NutritionSource = NutritionSource.search
+    """Where the nutrition data originated."""
 
     notes: str | None = None
     """Optional caveats or assumptions."""
