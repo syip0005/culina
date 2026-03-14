@@ -30,7 +30,7 @@ summary_service = SummaryService(session_factory=async_session)
 
 lookup_service = LookupService(
     nutrition_lookup=NutritionLookup(),
-    conversation_store=InMemoryConversationStore(ttl_seconds=900),
+    conversation_store=InMemoryConversationStore(ttl_seconds=60),
 )
 
 __all__ = [

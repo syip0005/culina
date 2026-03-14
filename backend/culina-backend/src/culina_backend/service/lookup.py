@@ -33,7 +33,7 @@ class LookupService:
         self,
         nutrition_lookup: NutritionLookup,
         conversation_store: ConversationStore,
-        max_conversations_per_user: int = 3,
+        max_conversations_per_user: int = 5,
     ) -> None:
         self._lookup = nutrition_lookup
         self._store = conversation_store
