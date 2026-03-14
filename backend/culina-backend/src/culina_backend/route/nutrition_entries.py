@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from culina_backend.auth.dependencies import get_current_user
 from culina_backend.model.user import User
 from culina_backend.model.user_nutrition import NutritionEntry
+from culina_backend.route.dependencies import get_nutrition_entry_service
 from culina_backend.route.errors import handle_service_errors
 from culina_backend.route.schemas import (
     CreateNutritionEntryRequest,
@@ -18,17 +19,11 @@ from culina_backend.service.nutrition_entry import NutritionEntryService
 router = APIRouter(prefix="/nutrition-entries", tags=["nutrition-entries"])
 
 
-def _get_nutrition_entry_service() -> NutritionEntryService:
-    from culina_backend.service import nutrition_entry_service
-
-    return nutrition_entry_service
-
-
 @router.get("/")
 @handle_service_errors
 async def list_entries(
     user: User = Depends(get_current_user),
-    service: NutritionEntryService = Depends(_get_nutrition_entry_service),
+    service: NutritionEntryService = Depends(get_nutrition_entry_service),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
 ) -> list[NutritionEntry]:
@@ -41,7 +36,7 @@ async def list_entries(
 async def get_entry(
     entry_id: UUID,
     user: User = Depends(get_current_user),
-    service: NutritionEntryService = Depends(_get_nutrition_entry_service),
+    service: NutritionEntryService = Depends(get_nutrition_entry_service),
 ) -> NutritionEntry:
     """Get a single nutrition entry by ID."""
     entry = await service.get_entry(user.id, entry_id)
@@ -59,7 +54,7 @@ async def get_entry(
 async def create_entry(
     body: CreateNutritionEntryRequest,
     user: User = Depends(get_current_user),
-    service: NutritionEntryService = Depends(_get_nutrition_entry_service),
+    service: NutritionEntryService = Depends(get_nutrition_entry_service),
 ) -> NutritionEntry:
     """Create a new nutrition entry."""
     entry = NutritionEntry(user_id=user.id, **body.model_dump())
@@ -72,7 +67,7 @@ async def update_entry(
     entry_id: UUID,
     body: UpdateNutritionEntryRequest,
     user: User = Depends(get_current_user),
-    service: NutritionEntryService = Depends(_get_nutrition_entry_service),
+    service: NutritionEntryService = Depends(get_nutrition_entry_service),
 ) -> NutritionEntry:
     """Update a nutrition entry (copy-on-write for system entries)."""
     data = body.model_dump(exclude_unset=True)
@@ -84,7 +79,7 @@ async def update_entry(
 async def delete_entry(
     entry_id: UUID,
     user: User = Depends(get_current_user),
-    service: NutritionEntryService = Depends(_get_nutrition_entry_service),
+    service: NutritionEntryService = Depends(get_nutrition_entry_service),
 ) -> None:
     """Delete a nutrition entry."""
     await service.delete_entry(user.id, entry_id)
@@ -95,7 +90,7 @@ async def delete_entry(
 async def search_entries(
     body: SearchEntriesRequest,
     user: User = Depends(get_current_user),
-    service: NutritionEntryService = Depends(_get_nutrition_entry_service),
+    service: NutritionEntryService = Depends(get_nutrition_entry_service),
 ) -> list[NutritionEntry]:
     """Search nutrition entries by keyword or semantic similarity."""
     return await service.search_entries(

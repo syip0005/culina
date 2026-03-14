@@ -7,19 +7,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from culina_backend.auth.jwt import extract_claims, verify_token
 from culina_backend.model.user import User
+from culina_backend.route.dependencies import get_user_service
 from culina_backend.service.errors import AuthenticationError, DuplicateError
 from culina_backend.service.user import UserService
 
 logger = logging.getLogger(__name__)
 
 _bearer = HTTPBearer()
-
-
-def get_user_service() -> UserService:
-    """Return the singleton UserService for DI."""
-    from culina_backend.service import user_service
-
-    return user_service
 
 
 async def get_current_user(

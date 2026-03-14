@@ -2,7 +2,8 @@
 
 from fastapi import APIRouter, Depends
 
-from culina_backend.auth.dependencies import get_current_user, get_user_service
+from culina_backend.auth.dependencies import get_current_user
+from culina_backend.route.dependencies import get_user_service
 from culina_backend.model.user import User, UserSettings
 from culina_backend.route.errors import handle_service_errors
 from culina_backend.route.schemas import UpdateSettingsRequest, UpdateUserRequest
