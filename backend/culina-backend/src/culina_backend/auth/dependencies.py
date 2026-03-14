@@ -15,9 +15,16 @@ logger = logging.getLogger(__name__)
 _bearer = HTTPBearer()
 
 
+def get_user_service() -> UserService:
+    """Return the singleton UserService for DI."""
+    from culina_backend.service import user_service
+
+    return user_service
+
+
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
-    user_service: UserService = Depends(),
+    user_service: UserService = Depends(get_user_service),
 ) -> User:
     """Verify JWT, auto-provision user on first hit, sync profile changes."""
     try:
