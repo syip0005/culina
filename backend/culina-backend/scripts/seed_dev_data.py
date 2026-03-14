@@ -432,7 +432,7 @@ async def _seed(reset: bool) -> None:
         )
 
         if USER_ALICE_ID not in existing_meals and alice_entries:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
             meal = MealModel(
                 user_id=USER_ALICE_ID,
                 meal_type="breakfast",
@@ -455,7 +455,7 @@ async def _seed(reset: bool) -> None:
             )
 
         if USER_BOB_ID not in existing_meals and bob_entries:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
             meal = MealModel(
                 user_id=USER_BOB_ID,
                 meal_type="lunch",
@@ -474,6 +474,7 @@ async def _seed(reset: bool) -> None:
             print(f"  Created lunch meal for Bob with {min(2, len(bob_entries))} items")
 
     print("\nSeed complete.")
+    await engine.dispose()
 
 
 def main() -> None:
@@ -484,9 +485,6 @@ def main() -> None:
     args = parser.parse_args()
 
     asyncio.run(_seed(args.reset))
-
-    # Dispose engine to avoid asyncio warnings
-    asyncio.run(engine.dispose())
 
 
 if __name__ == "__main__":
