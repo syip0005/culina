@@ -60,7 +60,7 @@
 - Brutalist black-and-white: `--color-bg: #fff`, `--color-fg: #000`, `--border: 2px solid #000`
 - No border-radius, no shadows, uppercase bold typography
 - All styles in `src/index.css` using CSS custom properties
-- System font stack: `system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`
+- Primary font: Outfit (Google Fonts), fallback to system font stack
 
 ## Key Conventions
 - React 19 + TypeScript strict mode + Vite 8
