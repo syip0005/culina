@@ -1,9 +1,17 @@
 """Converters between ORM models and domain models."""
 
-from datetime import UTC, datetime
+from __future__ import annotations
 
-from culina_backend.database.models import NutritionEntryModel
+from datetime import UTC, datetime
+from uuid import UUID
+
+from culina_backend.database.models import (
+    NutritionEntryModel,
+    UserModel,
+    UserSettings as UserSettingsORM,
+)
 from culina_backend.model.nutrition import NutritionSource
+from culina_backend.model.user import User, UserSettings
 from culina_backend.model.user_nutrition import NutritionEntry
 
 
@@ -44,4 +52,60 @@ def nutrition_entry_to_orm(entry: NutritionEntry) -> NutritionEntryModel:
         date_retrieved=entry.date_retrieved,
         afcd_food_key=entry.afcd_food_key,
         base_entry_id=entry.base_entry_id,
+    )
+
+
+# ---------------------------------------------------------------------------
+# User converters
+# ---------------------------------------------------------------------------
+
+
+def user_settings_from_orm(model: UserSettingsORM) -> UserSettings:
+    return UserSettings(
+        daily_energy_target_kj=model.daily_energy_target_kj,
+        daily_protein_target_g=model.daily_protein_target_g,
+        daily_fat_target_g=model.daily_fat_target_g,
+        daily_carbs_target_g=model.daily_carbs_target_g,
+        timezone=model.timezone,
+        preferred_energy_unit=model.preferred_energy_unit,
+        extra=model.extra or {},
+    )
+
+
+def user_settings_to_orm(settings: UserSettings, user_id: UUID) -> UserSettingsORM:
+    return UserSettingsORM(
+        user_id=user_id,
+        daily_energy_target_kj=settings.daily_energy_target_kj,
+        daily_protein_target_g=settings.daily_protein_target_g,
+        daily_fat_target_g=settings.daily_fat_target_g,
+        daily_carbs_target_g=settings.daily_carbs_target_g,
+        timezone=settings.timezone,
+        preferred_energy_unit=settings.preferred_energy_unit,
+        extra=settings.extra,
+    )
+
+
+def user_from_orm(model: UserModel) -> User:
+    settings = None
+    if model.settings is not None:
+        settings = user_settings_from_orm(model.settings)
+    return User(
+        id=model.id,
+        external_id=model.external_id,
+        email=model.email,
+        display_name=model.display_name,
+        created_at=model.created_at,
+        updated_at=model.updated_at,
+        deleted_at=model.deleted_at,
+        settings=settings,
+    )
+
+
+def user_to_orm(user: User) -> UserModel:
+    return UserModel(
+        id=user.id,
+        external_id=user.external_id,
+        email=user.email,
+        display_name=user.display_name,
+        deleted_at=user.deleted_at,
     )

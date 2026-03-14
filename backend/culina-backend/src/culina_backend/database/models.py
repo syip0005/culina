@@ -30,6 +30,7 @@ class UserModel(Base, TimestampMixin):
     external_id: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     email: Mapped[str | None] = mapped_column(Text)
     display_name: Mapped[str | None] = mapped_column(Text)
+    deleted_at: Mapped[datetime | None] = mapped_column(default=None)
 
     # Relationships
     nutrition_entries: Mapped[list["NutritionEntryModel"]] = relationship(
@@ -37,6 +38,14 @@ class UserModel(Base, TimestampMixin):
     )
     meals: Mapped[list["MealModel"]] = relationship(back_populates="user")
     settings: Mapped["UserSettings | None"] = relationship(back_populates="user")
+
+    __table_args__ = (
+        Index(
+            "ix_users_active",
+            "id",
+            postgresql_where="deleted_at IS NULL",
+        ),
+    )
 
 
 class NutritionEntryModel(Base, TimestampMixin):
