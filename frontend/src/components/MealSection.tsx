@@ -80,7 +80,9 @@ export function MealSection({ mealType, meal, entries, energyUnit = 'kj', onAddI
           <div key={item.id} className="meal-item">
             <span className="meal-item-name">
               {entry?.food_item ?? '...'}
-              {item.quantity !== 1 && ` x${item.quantity}`}
+              {item.quantity !== 1 && entry && (entry.serving_unit === 'g' || entry.serving_unit === 'ml')
+                ? ` ${Math.round(entry.serving_amount * item.quantity)}${entry.serving_unit}`
+                : item.quantity !== 1 && ` x${item.quantity}`}
             </span>
             {entry && (
               <span className="meal-item-macros">
