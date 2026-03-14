@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../auth.tsx'
 import { useDebounce } from '../utils/debounce.ts'
 import { searchEntries, addMealItem, createMeal } from '../api.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
@@ -10,6 +11,7 @@ interface Props {
   meal: Meal | null
   onClose: () => void
   onItemAdded: () => void
+  onOptimisticAdd?: (entry: NutritionEntry, quantity: number) => void
 }
 
 /** Units where the user adjusts a weight/volume amount */
@@ -26,7 +28,9 @@ function servingLabel(amount: number, unit: ServingUnit, description: string | n
   return `${amount} ${unit}${amount !== 1 ? 's' : ''}`
 }
 
-export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded }: Props) {
+export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded, onOptimisticAdd }: Props) {
+  const { user } = useAuth()
+  const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<NutritionEntry[]>([])
   const [searching, setSearching] = useState(false)
@@ -40,21 +44,27 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
   useEffect(() => {
     if (!debouncedQuery.trim()) {
       setResults([])
+      setSearching(false)
       return
     }
 
     let cancelled = false
     setSearching(true)
 
-    Promise.all([
-      searchEntries(debouncedQuery, 'keyword', 5),
-      searchEntries(debouncedQuery, 'semantic', 8),
-    ]).then(([keyword, semantic]) => {
+    // Fire keyword search first (faster), then merge semantic results
+    searchEntries(debouncedQuery, 'keyword', 5).then((keyword) => {
       if (cancelled) return
-      const keywordIds = new Set(keyword.map((e) => e.id))
-      const deduped = semantic.filter((e) => !keywordIds.has(e.id)).slice(0, 3)
-      setResults([...keyword, ...deduped])
-      setSearching(false)
+      setResults(keyword)
+
+      searchEntries(debouncedQuery, 'semantic', 8).then((semantic) => {
+        if (cancelled) return
+        const keywordIds = new Set(keyword.map((e) => e.id))
+        const deduped = semantic.filter((e) => !keywordIds.has(e.id)).slice(0, 3)
+        setResults([...keyword, ...deduped])
+        setSearching(false)
+      }).catch(() => {
+        if (!cancelled) setSearching(false)
+      })
     }).catch(() => {
       if (!cancelled) setSearching(false)
     })
@@ -91,10 +101,13 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
       ? num / entry.serving_amount
       : num
 
-    const m = await ensureMeal()
-    await addMealItem(m.id, { nutrition_entry_id: entry.id, quantity })
+    // Optimistically update UI immediately
     setAddedIds((prev) => new Set(prev).add(entry.id))
     setAdding(null)
+    if (onOptimisticAdd) onOptimisticAdd(entry, quantity)
+
+    const m = await ensureMeal()
+    await addMealItem(m.id, { nutrition_entry_id: entry.id, quantity })
     onItemAdded()
   }
 
@@ -126,7 +139,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
         </div>
 
         <div className="overlay-body">
-          {searching && <div className="text-muted text-sm">Searching...</div>}
+          {searching && results.length === 0 && <div className="text-muted text-sm">Searching...</div>}
 
           {results.map((entry) => {
             const isAdded = addedIds.has(entry.id)
@@ -154,6 +167,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
                     proteinG={entry.protein_g}
                     fatG={entry.fat_g}
                     carbsG={entry.carbs_g}
+                    energyUnit={eUnit}
                   />
                 </div>
 
@@ -166,8 +180,8 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
                       type="number"
                       value={adding.value}
                       onChange={(e) => setAdding({ ...adding, value: e.target.value })}
-                      step={scalable ? '10' : '0.5'}
-                      min="0.1"
+                      step={scalable ? '1' : '0.5'}
+                      min={scalable ? '1' : '0.5'}
                       autoFocus
                     />
                     <button onClick={confirmAdd} style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}>
