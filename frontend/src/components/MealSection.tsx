@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import type { Meal, MealType, NutritionEntry } from '../types.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
+import { displayEnergy, energyLabel } from '../utils/energy.ts'
 import { deleteMealItem } from '../api.ts'
 
 interface Props {
   mealType: MealType
   meal: Meal | null
   entries: Map<string, NutritionEntry>
+  energyUnit?: string
   onAddItem: () => void
   onRefresh: () => void
+  onOptimisticDelete?: (macros: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => void
 }
 
 const LABELS: Record<MealType, string> = {
@@ -18,7 +21,7 @@ const LABELS: Record<MealType, string> = {
   snacks: 'SNACKS',
 }
 
-export function MealSection({ mealType, meal, entries, onAddItem, onRefresh }: Props) {
+export function MealSection({ mealType, meal, entries, energyUnit = 'kj', onAddItem, onRefresh, onOptimisticDelete }: Props) {
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
   const items = (meal?.items ?? []).filter((item) => !removedIds.has(item.id))
 
@@ -39,6 +42,17 @@ export function MealSection({ mealType, meal, entries, onAddItem, onRefresh }: P
 
   const handleDelete = async (itemId: string) => {
     if (!meal) return
+    // Compute macros for the deleted item so we can optimistically update the summary
+    const item = meal.items.find((i) => i.id === itemId)
+    const entry = item ? entries.get(item.nutrition_entry_id) : undefined
+    if (item && entry && onOptimisticDelete) {
+      onOptimisticDelete({
+        energy_kj: entry.energy_kj * item.quantity,
+        protein_g: entry.protein_g * item.quantity,
+        fat_g: entry.fat_g * item.quantity,
+        carbs_g: entry.carbs_g * item.quantity,
+      })
+    }
     // Optimistically remove from UI immediately
     setRemovedIds((prev) => new Set(prev).add(itemId))
     await deleteMealItem(meal.id, itemId)
@@ -55,6 +69,7 @@ export function MealSection({ mealType, meal, entries, onAddItem, onRefresh }: P
             proteinG={totalProtein}
             fatG={totalFat}
             carbsG={totalCarbs}
+            energyUnit={energyUnit}
           />
         )}
       </div>
@@ -69,7 +84,7 @@ export function MealSection({ mealType, meal, entries, onAddItem, onRefresh }: P
             </span>
             {entry && (
               <span className="meal-item-macros">
-                {Math.round(entry.energy_kj * item.quantity)} kJ
+                {displayEnergy(entry.energy_kj * item.quantity, energyUnit)} {energyLabel(energyUnit)}
               </span>
             )}
             <button className="btn-delete" onClick={() => handleDelete(item.id)}>&times;</button>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useAuth } from '../auth.tsx'
 import { lookup, createNutritionEntry, addMealItem, createMeal } from '../api.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { isSearchNutritionInfo } from '../types.ts'
@@ -39,6 +40,8 @@ interface Message {
 }
 
 export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onItemAdded, onBack }: Props) {
+  const { user } = useAuth()
+  const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
   const [messages, setMessages] = useState<Message[]>([])
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [input, setInput] = useState('')
@@ -209,6 +212,7 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
                               proteinG={info.protein_g}
                               fatG={info.fat_g}
                               carbsG={info.carbs_g}
+                              energyUnit={eUnit}
                             />
                             {isAdded ? (
                               <div className="text-muted text-sm mt-1">Added</div>
@@ -221,7 +225,7 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
                                   type="number"
                                   value={addingQuantity.quantity}
                                   onChange={(e) => setAddingQuantity({ ...addingQuantity, quantity: e.target.value })}
-                                  step={isScalableUnit(info.serving_unit) ? '10' : '0.5'}
+                                  step={isScalableUnit(info.serving_unit) ? '1' : '0.5'}
                                   min="0.1"
                                 />
                                 <button onClick={confirmAdd} style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}>
