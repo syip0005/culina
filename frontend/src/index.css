@@ -236,6 +236,10 @@ label {
   margin-left: 0.5rem;
 }
 
+.meal-section-header + .meal-section-footer {
+  border-top: none;
+}
+
 .meal-section-footer {
   padding: 0.5rem 0.75rem;
   background: var(--color-surface);

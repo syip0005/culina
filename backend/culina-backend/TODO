@@ -23,7 +23,7 @@ Bugs
 
 Improvements
 
-- Current colour scheme and layout is great, just need a better font. It's pushing too much brutalist. 
+- Current colour scheme and layout is great, just need a better font. It's pushing too much brutalist. [Done]
 - Back and forth buttons to go back and forth. Eager load in previous 2 days.
 - We need to speed up the thinking of the AI.
 - Introduce suggestions for "Add Item", based on top items first and recommender system later. Create service layer / interchangable extensbility for this. What are the best ways here? What ML techniques work?
