@@ -8,6 +8,7 @@ class AppSecrets(BaseSettings):
 
     OPENROUTER_API_KEY: str
     EXA_API_KEY: str
+    DATABASE_URL: str
 
 
 class AiSettings(BaseSettings):
