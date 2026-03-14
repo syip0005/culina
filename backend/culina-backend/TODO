@@ -29,3 +29,4 @@ Improvements
 - Introduce suggestions for "Add Item", based on top items first and recommender system later. Create service layer / interchangable extensbility for this. What are the best ways here? What ML techniques work?
 - When showing irregular quantities, we just have the amount x whatever the serving size is. For UX, if these are weight items or ml items, they should be shown in those figures.
 - Reduce TTL to 60 seconds, and increase max concurrent to 5.
+- Summary statistics for week, but these need to be quick, so maybe when user logins we also recalculate this I don't know what's the quickest.
