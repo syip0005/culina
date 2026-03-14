@@ -8,5 +8,6 @@
 - Row level security (RLS)
 - Photo service
 - Routes
+- Multi-item routes / batch routes
 - Auth [Done]
 - Evals for AI
