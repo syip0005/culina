@@ -1,0 +1,13 @@
+"""Service-layer exceptions."""
+
+
+class ServiceError(Exception): ...
+
+
+class NotFoundError(ServiceError): ...
+
+
+class ForbiddenError(ServiceError): ...
+
+
+class EmbeddingError(ServiceError): ...
