@@ -7,6 +7,7 @@ from collections.abc import Callable
 from fastapi import HTTPException, status
 
 from culina_backend.service.errors import (
+    ConversationLimitError,
     DuplicateError,
     ForbiddenError,
     NotFoundError,
@@ -33,6 +34,10 @@ def handle_service_errors(func: Callable) -> Callable:
         except DuplicateError as exc:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
+        except ConversationLimitError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(exc)
             ) from exc
 
     return wrapper

@@ -1,8 +1,11 @@
 """Service layer — singleton instances wired to config."""
 
+from culina_backend.ai.conversation_store import InMemoryConversationStore
+from culina_backend.ai.nutrition_lookup import NutritionLookup
 from culina_backend.config import ai_settings, secrets
 from culina_backend.database.base import async_session
 from culina_backend.service.embedding import EmbeddingService
+from culina_backend.service.lookup import LookupService
 from culina_backend.service.meal import MealService
 from culina_backend.service.nutrition_entry import NutritionEntryService
 from culina_backend.service.user import UserService
@@ -22,8 +25,14 @@ user_service = UserService(session_factory=async_session)
 
 meal_service = MealService(session_factory=async_session)
 
+lookup_service = LookupService(
+    nutrition_lookup=NutritionLookup(),
+    conversation_store=InMemoryConversationStore(ttl_seconds=900),
+)
+
 __all__ = [
     "embedding_service",
+    "lookup_service",
     "meal_service",
     "nutrition_entry_service",
     "user_service",

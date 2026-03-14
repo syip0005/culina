@@ -1,11 +1,16 @@
-"""Request schemas for API routes."""
+"""Request/response schemas for API routes."""
 
 from datetime import datetime
+from typing import Annotated, Literal, Union
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
-from culina_backend.model.nutrition import NutritionSource, ServingUnit
+from culina_backend.model.nutrition import (
+    NutritionSource,
+    SearchNutritionResult,
+    ServingUnit,
+)
 
 
 # ── User ──────────────────────────────────────────────────────────────
@@ -96,3 +101,39 @@ class UpdateMealRequest(BaseModel):
     name: str | None = None
     eaten_at: datetime | None = None
     notes: str | None = None
+
+
+# ── Lookup ───────────────────────────────────────────────────────────
+
+
+class LookupRequest(BaseModel):
+    text: str | None = None
+    image_base64: str | None = None
+    image_media_type: str = "image/jpeg"
+    conversation_id: str | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one_input(self) -> "LookupRequest":
+        if not self.text and not self.image_base64:
+            msg = "Provide at least text or image_base64"
+            raise ValueError(msg)
+        return self
+
+
+class FollowUpResponse(BaseModel):
+    kind: Literal["follow_up"] = "follow_up"
+    conversation_id: str
+    follow_up_question: str
+    follow_up_buttons: list[str] = []
+
+
+class NutritionResultResponse(BaseModel):
+    kind: Literal["result"] = "result"
+    conversation_id: str
+    result: SearchNutritionResult
+
+
+LookupResponse = Annotated[
+    Union[FollowUpResponse, NutritionResultResponse],
+    "Discriminated by the 'kind' field",
+]
