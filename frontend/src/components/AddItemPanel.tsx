@@ -3,13 +3,27 @@ import { useDebounce } from '../utils/debounce.ts'
 import { searchEntries, addMealItem, createMeal } from '../api.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { LookupView } from './LookupView.tsx'
-import type { Meal, MealType, NutritionEntry } from '../types.ts'
+import type { Meal, MealType, NutritionEntry, ServingUnit } from '../types.ts'
 
 interface Props {
   mealType: MealType
   meal: Meal | null
   onClose: () => void
   onItemAdded: () => void
+}
+
+/** Units where the user adjusts a weight/volume amount */
+function isScalableUnit(unit: ServingUnit): boolean {
+  return unit === 'g' || unit === 'ml'
+}
+
+function servingLabel(amount: number, unit: ServingUnit, description: string | null): string {
+  if (isScalableUnit(unit)) {
+    return `${amount}${unit}${description ? ` (${description})` : ''}`
+  }
+  // piece / serve — show description if available, otherwise "1 piece" etc.
+  if (description) return description
+  return `${amount} ${unit}${amount !== 1 ? 's' : ''}`
 }
 
 export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded }: Props) {
@@ -19,6 +33,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
   const [meal, setMeal] = useState<Meal | null>(initialMeal)
   const [showLookup, setShowLookup] = useState(false)
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
+  const [adding, setAdding] = useState<{ entry: NutritionEntry; value: string } | null>(null)
 
   const debouncedQuery = useDebounce(query, 300)
 
@@ -57,10 +72,29 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
     return created
   }
 
-  const handleAddResult = async (entry: NutritionEntry) => {
+  const handleSelect = (entry: NutritionEntry) => {
+    if (addedIds.has(entry.id)) return
+    const defaultValue = isScalableUnit(entry.serving_unit)
+      ? String(entry.serving_amount)
+      : '1'
+    setAdding({ entry, value: defaultValue })
+  }
+
+  const confirmAdd = async () => {
+    if (!adding) return
+    const { entry, value } = adding
+    const num = parseFloat(value) || 1
+
+    // For g/ml: quantity = userAmount / baseServingAmount
+    // For piece/serve: quantity = userValue directly
+    const quantity = isScalableUnit(entry.serving_unit)
+      ? num / entry.serving_amount
+      : num
+
     const m = await ensureMeal()
-    await addMealItem(m.id, { nutrition_entry_id: entry.id, quantity: 1.0 })
+    await addMealItem(m.id, { nutrition_entry_id: entry.id, quantity })
     setAddedIds((prev) => new Set(prev).add(entry.id))
+    setAdding(null)
     onItemAdded()
   }
 
@@ -96,12 +130,15 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
 
           {results.map((entry) => {
             const isAdded = addedIds.has(entry.id)
+            const isAddingThis = adding?.entry.id === entry.id
+            const scalable = isScalableUnit(entry.serving_unit)
+
             return (
               <div
                 key={entry.id}
                 className={`search-result ${isAdded ? 'added' : ''}`}
-                onClick={() => !isAdded && handleAddResult(entry)}
-                style={{ cursor: isAdded ? 'default' : 'pointer' }}
+                onClick={() => !isAdded && !isAddingThis && handleSelect(entry)}
+                style={{ cursor: isAdded || isAddingThis ? 'default' : 'pointer' }}
               >
                 <div className="search-result-name">
                   {entry.food_item}
@@ -109,8 +146,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
                 </div>
                 {entry.brand && <div className="search-result-brand">{entry.brand}</div>}
                 <div className="search-result-serving">
-                  {entry.serving_amount}{entry.serving_unit}
-                  {entry.serving_description && ` (${entry.serving_description})`}
+                  {servingLabel(entry.serving_amount, entry.serving_unit, entry.serving_description)}
                 </div>
                 <div className="search-result-macros">
                   <NutritionSummary
@@ -120,6 +156,32 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
                     carbsG={entry.carbs_g}
                   />
                 </div>
+
+                {isAddingThis && (
+                  <div className="quantity-inline" onClick={(e) => e.stopPropagation()}>
+                    <label style={{ fontSize: '0.7rem', marginRight: '0.3rem' }}>
+                      {scalable ? entry.serving_unit : (entry.serving_description || `${entry.serving_amount} ${entry.serving_unit}`)}:
+                    </label>
+                    <input
+                      type="number"
+                      value={adding.value}
+                      onChange={(e) => setAdding({ ...adding, value: e.target.value })}
+                      step={scalable ? '10' : '0.5'}
+                      min="0.1"
+                      autoFocus
+                    />
+                    <button onClick={confirmAdd} style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}>
+                      Add
+                    </button>
+                    <button
+                      className="secondary"
+                      onClick={() => setAdding(null)}
+                      style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })}

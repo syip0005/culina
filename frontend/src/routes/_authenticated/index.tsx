@@ -54,15 +54,23 @@ function HomePage() {
       }
     }
 
-    const newEntries = new Map(entries)
-    const toFetch = [...entryIds].filter((id) => !newEntries.has(id))
-    const fetched = await Promise.all(toFetch.map((id) => getEntry(id)))
-    for (const entry of fetched) {
-      newEntries.set(entry.id, entry)
-    }
-    setEntries(newEntries)
+    setEntries((prev) => {
+      const toFetch = [...entryIds].filter((id) => !prev.has(id))
+      if (toFetch.length === 0) return prev
+      // Kick off fetches and merge when done
+      Promise.all(toFetch.map((id) => getEntry(id))).then((fetched) => {
+        setEntries((current) => {
+          const merged = new Map(current)
+          for (const entry of fetched) {
+            merged.set(entry.id, entry)
+          }
+          return merged
+        })
+      })
+      return prev
+    })
     setLoading(false)
-  }, [tz]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tz])
 
   useEffect(() => {
     loadData()

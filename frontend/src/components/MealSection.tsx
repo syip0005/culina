@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Meal, MealType, NutritionEntry } from '../types.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { deleteMealItem } from '../api.ts'
@@ -18,7 +19,8 @@ const LABELS: Record<MealType, string> = {
 }
 
 export function MealSection({ mealType, meal, entries, onAddItem, onRefresh }: Props) {
-  const items = meal?.items ?? []
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
+  const items = (meal?.items ?? []).filter((item) => !removedIds.has(item.id))
 
   let totalEnergy = 0
   let totalProtein = 0
@@ -37,6 +39,8 @@ export function MealSection({ mealType, meal, entries, onAddItem, onRefresh }: P
 
   const handleDelete = async (itemId: string) => {
     if (!meal) return
+    // Optimistically remove from UI immediately
+    setRemovedIds((prev) => new Set(prev).add(itemId))
     await deleteMealItem(meal.id, itemId)
     onRefresh()
   }

@@ -8,7 +8,20 @@ import type {
   LookupResponse,
   SearchNutritionInfo,
   SearchNutritionNotFound,
+  ServingUnit,
 } from '../types.ts'
+
+function isScalableUnit(unit: ServingUnit): boolean {
+  return unit === 'g' || unit === 'ml'
+}
+
+function servingLabel(amount: number, unit: ServingUnit, description: string | null): string {
+  if (isScalableUnit(unit)) {
+    return `${amount}${unit}${description ? ` (${description})` : ''}`
+  }
+  if (description) return description
+  return `${amount} ${unit}${amount !== 1 ? 's' : ''}`
+}
 
 interface Props {
   initialQuery: string
@@ -34,6 +47,7 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set())
   const [addingQuantity, setAddingQuantity] = useState<{ item: SearchNutritionInfo; quantity: string } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const sentInitial = useRef(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -71,7 +85,8 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
   }
 
   useEffect(() => {
-    if (initialQuery.trim()) {
+    if (initialQuery.trim() && !sentInitial.current) {
+      sentInitial.current = true
       sendMessage(initialQuery)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -88,14 +103,22 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
   }
 
   const handleAddItem = (item: SearchNutritionInfo) => {
-    setAddingQuantity({ item, quantity: '1' })
+    const defaultValue = isScalableUnit(item.serving_unit)
+      ? String(item.serving_amount)
+      : '1'
+    setAddingQuantity({ item, quantity: defaultValue })
   }
 
   const confirmAdd = async () => {
     if (!addingQuantity) return
 
     const { item, quantity } = addingQuantity
-    const qty = parseFloat(quantity) || 1
+    const num = parseFloat(quantity) || 1
+    // For g/ml: quantity = userAmount / baseServingAmount
+    // For piece/serve: quantity = userValue directly
+    const qty = isScalableUnit(item.serving_unit)
+      ? num / item.serving_amount
+      : num
 
     try {
       const entry = await createNutritionEntry({
@@ -179,8 +202,7 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
                             <div className="name">{info.food_item}</div>
                             {info.brand && <div className="meta">{info.brand}</div>}
                             <div className="meta">
-                              {info.serving_amount}{info.serving_unit}
-                              {info.serving_description && ` (${info.serving_description})`}
+                              {servingLabel(info.serving_amount, info.serving_unit, info.serving_description)}
                             </div>
                             <NutritionSummary
                               energyKj={info.energy_kj}
@@ -192,11 +214,14 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
                               <div className="text-muted text-sm mt-1">Added</div>
                             ) : isAddingThis ? (
                               <div className="quantity-inline">
+                                <label style={{ fontSize: '0.7rem', marginRight: '0.3rem' }}>
+                                  {isScalableUnit(info.serving_unit) ? info.serving_unit : (info.serving_description || `${info.serving_amount} ${info.serving_unit}`)}:
+                                </label>
                                 <input
                                   type="number"
                                   value={addingQuantity.quantity}
                                   onChange={(e) => setAddingQuantity({ ...addingQuantity, quantity: e.target.value })}
-                                  step="0.5"
+                                  step={isScalableUnit(info.serving_unit) ? '10' : '0.5'}
                                   min="0.1"
                                 />
                                 <button onClick={confirmAdd} style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}>

@@ -88,9 +88,10 @@ class MealService:
             )
 
             if eaten_after is not None:
-                q = q.where(MealModel.eaten_at >= eaten_after)
+                # Strip tzinfo — DB column is TIMESTAMP WITHOUT TIME ZONE
+                q = q.where(MealModel.eaten_at >= eaten_after.replace(tzinfo=None))
             if eaten_before is not None:
-                q = q.where(MealModel.eaten_at <= eaten_before)
+                q = q.where(MealModel.eaten_at <= eaten_before.replace(tzinfo=None))
             if meal_type is not None:
                 q = q.where(MealModel.meal_type == meal_type)
 
