@@ -5,7 +5,8 @@ import { getDailySummary, listMeals, getEntry } from '../../api.ts'
 import { todayRange, todayDateStr } from '../../utils/date.ts'
 import { MealSection } from '../../components/MealSection.tsx'
 import { AddItemPanel } from '../../components/AddItemPanel.tsx'
-import type { Meal, MealType, NutritionEntry, DailySummaryResponse } from '../../types.ts'
+import { displayEnergy, energyLabel } from '../../utils/energy.ts'
+import type { Meal, MealItem, MealType, NutritionEntry, DailySummaryResponse } from '../../types.ts'
 
 export const Route = createFileRoute('/_authenticated/')({
   component: HomePage,
@@ -16,6 +17,7 @@ const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snacks']
 function HomePage() {
   const { user } = useAuth()
   const tz = user?.settings?.timezone ?? 'Australia/Sydney'
+  const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
 
   const [summary, setSummary] = useState<DailySummaryResponse | null>(null)
   const [mealsByType, setMealsByType] = useState<Record<MealType, Meal | null>>({
@@ -76,6 +78,88 @@ function HomePage() {
     loadData()
   }, [loadData])
 
+  const handleOptimisticDelete = useCallback((macros: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => {
+    setSummary((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        consumed: {
+          energy_kj: prev.consumed.energy_kj - macros.energy_kj,
+          protein_g: prev.consumed.protein_g - macros.protein_g,
+          fat_g: prev.consumed.fat_g - macros.fat_g,
+          carbs_g: prev.consumed.carbs_g - macros.carbs_g,
+        },
+        remaining: {
+          energy_kj: prev.remaining.energy_kj + macros.energy_kj,
+          protein_g: prev.remaining.protein_g + macros.protein_g,
+          fat_g: prev.remaining.fat_g + macros.fat_g,
+          carbs_g: prev.remaining.carbs_g + macros.carbs_g,
+        },
+      }
+    })
+  }, [])
+
+  const handleOptimisticAdd = useCallback((mealType: MealType, entry: NutritionEntry, quantity: number) => {
+    // Update summary bar immediately
+    setSummary((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        consumed: {
+          energy_kj: prev.consumed.energy_kj + entry.energy_kj * quantity,
+          protein_g: prev.consumed.protein_g + entry.protein_g * quantity,
+          fat_g: prev.consumed.fat_g + entry.fat_g * quantity,
+          carbs_g: prev.consumed.carbs_g + entry.carbs_g * quantity,
+        },
+        remaining: {
+          energy_kj: prev.remaining.energy_kj - entry.energy_kj * quantity,
+          protein_g: prev.remaining.protein_g - entry.protein_g * quantity,
+          fat_g: prev.remaining.fat_g - entry.fat_g * quantity,
+          carbs_g: prev.remaining.carbs_g - entry.carbs_g * quantity,
+        },
+      }
+    })
+
+    // Add entry to cache so MealSection can display it
+    setEntries((prev) => {
+      if (prev.has(entry.id)) return prev
+      const next = new Map(prev)
+      next.set(entry.id, entry)
+      return next
+    })
+
+    // Inject a temporary item into the meal
+    const tempItem: MealItem = {
+      id: `temp-${Date.now()}`,
+      meal_id: null,
+      nutrition_entry_id: entry.id,
+      quantity,
+      notes: null,
+      created_at: new Date().toISOString(),
+    }
+    setMealsByType((prev) => {
+      const existing = prev[mealType]
+      if (existing) {
+        return { ...prev, [mealType]: { ...existing, items: [...existing.items, tempItem] } }
+      }
+      // Meal doesn't exist yet — create a placeholder; loadData will replace it
+      return {
+        ...prev,
+        [mealType]: {
+          id: `temp-meal-${Date.now()}`,
+          user_id: '',
+          meal_type: mealType,
+          name: null,
+          eaten_at: new Date().toISOString(),
+          notes: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          items: [tempItem],
+        },
+      }
+    })
+  }, [])
+
   if (loading) return <div className="container">LOADING...</div>
 
   return (
@@ -88,8 +172,8 @@ function HomePage() {
       {summary && (
         <div className="summary-bar">
           <div className="summary-item">
-            <div className="value">{Math.round(summary.consumed.energy_kj)}</div>
-            <div className="label">Energy kJ</div>
+            <div className="value">{displayEnergy(summary.consumed.energy_kj, eUnit)}</div>
+            <div className="label">Energy {energyLabel(eUnit)}</div>
           </div>
           <div className="summary-item">
             <div className="value">{Math.round(summary.consumed.protein_g)}</div>
@@ -108,7 +192,7 @@ function HomePage() {
 
       {summary && (
         <div style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '1rem', textAlign: 'center' }}>
-          Remaining: {Math.round(summary.remaining.energy_kj)} kJ | {Math.round(summary.remaining.protein_g)}p | {Math.round(summary.remaining.fat_g)}f | {Math.round(summary.remaining.carbs_g)}c
+          Remaining: {displayEnergy(summary.remaining.energy_kj, eUnit)} {energyLabel(eUnit)} | {Math.round(summary.remaining.protein_g)}p | {Math.round(summary.remaining.fat_g)}f | {Math.round(summary.remaining.carbs_g)}c
         </div>
       )}
 
@@ -118,8 +202,10 @@ function HomePage() {
           mealType={mt}
           meal={mealsByType[mt]}
           entries={entries}
+          energyUnit={eUnit}
           onAddItem={() => setAddingFor(mt)}
           onRefresh={loadData}
+          onOptimisticDelete={handleOptimisticDelete}
         />
       ))}
 
@@ -129,6 +215,7 @@ function HomePage() {
           meal={mealsByType[addingFor]}
           onClose={() => setAddingFor(null)}
           onItemAdded={loadData}
+          onOptimisticAdd={(entry, quantity) => handleOptimisticAdd(addingFor, entry, quantity)}
         />
       )}
     </div>
