@@ -68,7 +68,7 @@ def upgrade() -> None:
     sa.Column('afcd_food_key', sa.Text(), nullable=True),
     sa.Column('base_entry_id', sa.UUID(), nullable=True),
     sa.Column('date_retrieved', sa.Date(), nullable=True),
-    sa.Column('search_text', sa.Text(), sa.Computed("food_item || ' ' || coalesce(brand, '') || ' ' || coalesce(notes, '')", ), nullable=True),
+    sa.Column('search_text', sa.Text(), sa.Computed("food_item || ' ' || coalesce(brand, '')", ), nullable=True),
     sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=1536), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
