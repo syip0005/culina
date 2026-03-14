@@ -19,6 +19,7 @@ dependencies = [
     "asyncpg>=0.30.0",
     "alembic>=1.15.0",
     "pgvector>=0.3.0",
+    "PyJWT[crypto]>=2.8.0",
     "pandas>=3.0.1",
     "openpyxl>=3.1.5",
 ]

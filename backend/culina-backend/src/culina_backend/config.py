@@ -9,6 +9,8 @@ class AppSecrets(BaseSettings):
     OPENROUTER_API_KEY: str
     EXA_API_KEY: str
     DATABASE_URL: str
+    SUPABASE_JWT_ISSUER: str
+    SUPABASE_JWKS_URL: str
 
 
 class AiSettings(BaseSettings):

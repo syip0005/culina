@@ -577,6 +577,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-ai" },
     { name = "pydantic-settings" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "pyyaml" },
     { name = "sqlalchemy", extra = ["asyncio"] },
 ]
@@ -601,6 +602,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pydantic-ai", specifier = ">=1.67.0" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
+    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.8.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0" },
 ]
