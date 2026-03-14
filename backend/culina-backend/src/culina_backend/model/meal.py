@@ -13,7 +13,6 @@ class MealItem(BaseModel):
     meal_id: UUID | None = None
     nutrition_entry_id: UUID
     quantity: float = 1.0
-    custom_serving_size: str | None = None
     notes: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 

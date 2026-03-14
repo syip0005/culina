@@ -7,15 +7,15 @@ from unittest.mock import MagicMock, patch
 
 import jwt as pyjwt
 import pytest
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from culina_backend.auth.jwt import SupabaseClaims, extract_claims, verify_token
 from culina_backend.service.errors import AuthenticationError
 
 # ---------------------------------------------------------------------------
-# RSA keypair generated once per module
+# EC keypair generated once per module (ES256 = P-256 curve)
 # ---------------------------------------------------------------------------
-_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+_private_key = ec.generate_private_key(ec.SECP256R1())
 _public_key = _private_key.public_key()
 
 TEST_ISSUER = "https://test.supabase.co/auth/v1"
@@ -24,7 +24,7 @@ TEST_AUDIENCE = "authenticated"
 
 def _encode_token(payload: dict) -> str:
     """Encode a JWT with the test RSA private key."""
-    return pyjwt.encode(payload, _private_key, algorithm="RS256")
+    return pyjwt.encode(payload, _private_key, algorithm="ES256")
 
 
 def _valid_payload(**overrides) -> dict:

@@ -156,7 +156,7 @@ class MealService:
             if item is None or item.meal_id != meal_id:
                 raise NotFoundError(f"MealItem {item_id} not found")
 
-            allowed = {"quantity", "custom_serving_size", "notes"}
+            allowed = {"quantity", "notes"}
             for key, value in data.items():
                 if key in allowed:
                     setattr(item, key, value)

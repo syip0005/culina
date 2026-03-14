@@ -192,7 +192,9 @@ def make_entry(
     protein_g: float = 10.0,
     fat_g: float = 5.0,
     carbs_g: float = 20.0,
-    serving_size: str = "100 g",
+    serving_amount: float = 100.0,
+    serving_unit: str = "g",
+    serving_description: str | None = "100 g",
     brand: str | None = None,
     notes: str | None = None,
     afcd_food_key: str | None = None,
@@ -205,7 +207,9 @@ def make_entry(
         food_item=food_item,
         brand=brand,
         source=source,
-        serving_size=serving_size,
+        serving_amount=serving_amount,
+        serving_unit=serving_unit,
+        serving_description=serving_description,
         energy_kj=energy_kj,
         protein_g=protein_g,
         fat_g=fat_g,
@@ -241,7 +245,6 @@ def make_meal_item(
     nutrition_entry_id: UUID,
     *,
     quantity: float = 1.0,
-    custom_serving_size: str | None = None,
     notes: str | None = None,
 ) -> MealItemORM:
     return MealItemORM(
@@ -249,6 +252,5 @@ def make_meal_item(
         meal_id=meal_id,
         nutrition_entry_id=nutrition_entry_id,
         quantity=quantity,
-        custom_serving_size=custom_serving_size,
         notes=notes,
     )

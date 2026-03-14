@@ -61,7 +61,13 @@ class NutritionEntryModel(Base, TimestampMixin):
     brand: Mapped[str | None] = mapped_column(Text)
     source: Mapped[str] = mapped_column(String, nullable=False)
     source_url: Mapped[str | None] = mapped_column(Text)
-    serving_size: Mapped[str | None] = mapped_column(Text)
+    serving_amount: Mapped[float] = mapped_column(
+        Double, nullable=False, server_default="1.0"
+    )
+    serving_unit: Mapped[str] = mapped_column(
+        String, nullable=False, server_default="'g'"
+    )
+    serving_description: Mapped[str | None] = mapped_column(Text)
     energy_kj: Mapped[float | None] = mapped_column(Double)
     protein_g: Mapped[float | None] = mapped_column(Double)
     fat_g: Mapped[float | None] = mapped_column(Double)
@@ -162,7 +168,6 @@ class MealItem(Base):
     quantity: Mapped[float] = mapped_column(
         Double, nullable=False, server_default="1.0"
     )
-    custom_serving_size: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 

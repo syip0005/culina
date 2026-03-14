@@ -39,6 +39,7 @@
 - `NutritionEntry` — core persisted model for all sources (AFCD, search, manual), discriminated by `NutritionSource` enum
 - `SYSTEM_USER_ID` (`UUID(0)`) — sentinel user ID for shared AFCD base data; query layer unions system + user entries, user overrides take precedence
 - **Full-copy override pattern**: user overrides store a complete entry (not a patch), with `base_entry_id` pointing to the original for lineage tracking
+- **Structured serving size**: `serving_amount` (float), `serving_unit` (`ServingUnit` enum: g, ml, piece, serve), `serving_description` (optional human-readable label). Replaces the old freeform `serving_size` string.
 - `search_text` — computed field combining `food_item + brand + notes` for future search/embedding use
 - `afcd_food_key` — AFCD Public Food Key for external cross-referencing, populated only on AFCD-sourced entries
 

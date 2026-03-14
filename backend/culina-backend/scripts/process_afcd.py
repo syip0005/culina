@@ -10,7 +10,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from culina_backend.model.nutrition import NutritionSource  # noqa: E402
+from culina_backend.model.nutrition import NutritionSource, ServingUnit  # noqa: E402
 from culina_backend.model.user_nutrition import SYSTEM_USER_ID, NutritionEntry  # noqa: E402
 
 DATA_DIR = PROJECT_ROOT / "data" / "afcd"
@@ -76,7 +76,9 @@ def main() -> None:
             food_item=str(row["food_item"]).strip(),
             brand="",
             source_url=AFCD_SOURCE_URL,
-            serving_size="100g",
+            serving_amount=100.0,
+            serving_unit=ServingUnit.g,
+            serving_description="100 g",
             energy_kj=round(float(row["energy_kj"]), 1),
             protein_g=round(float(row["protein_g"]), 1),
             fat_g=round(float(row["fat_g"]), 1),

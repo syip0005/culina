@@ -13,7 +13,7 @@ from culina_backend.database.models import (
     UserSettings as UserSettingsORM,
 )
 from culina_backend.model.meal import Meal, MealItem
-from culina_backend.model.nutrition import NutritionSource
+from culina_backend.model.nutrition import NutritionSource, ServingUnit
 from culina_backend.model.user import User, UserSettings
 from culina_backend.model.user_nutrition import NutritionEntry
 
@@ -25,7 +25,9 @@ def nutrition_entry_from_orm(model: NutritionEntryModel) -> NutritionEntry:
         food_item=model.food_item,
         brand=model.brand or "",
         source_url=model.source_url or "",
-        serving_size=model.serving_size or "",
+        serving_amount=model.serving_amount,
+        serving_unit=ServingUnit(model.serving_unit),
+        serving_description=model.serving_description,
         energy_kj=model.energy_kj or 0.0,
         protein_g=model.protein_g or 0.0,
         fat_g=model.fat_g or 0.0,
@@ -45,7 +47,9 @@ def nutrition_entry_to_orm(entry: NutritionEntry) -> NutritionEntryModel:
         food_item=entry.food_item,
         brand=entry.brand or None,
         source_url=entry.source_url or None,
-        serving_size=entry.serving_size or None,
+        serving_amount=entry.serving_amount,
+        serving_unit=entry.serving_unit.value,
+        serving_description=entry.serving_description,
         energy_kj=entry.energy_kj,
         protein_g=entry.protein_g,
         fat_g=entry.fat_g,
@@ -125,7 +129,6 @@ def meal_item_from_orm(model: MealItemORM) -> MealItem:
         meal_id=model.meal_id,
         nutrition_entry_id=model.nutrition_entry_id,
         quantity=model.quantity,
-        custom_serving_size=model.custom_serving_size,
         notes=model.notes,
         created_at=model.created_at,
     )
@@ -137,7 +140,6 @@ def meal_item_to_orm(item: MealItem) -> MealItemORM:
         meal_id=item.meal_id,
         nutrition_entry_id=item.nutrition_entry_id,
         quantity=item.quantity,
-        custom_serving_size=item.custom_serving_size,
         notes=item.notes,
     )
 

@@ -13,6 +13,15 @@ class NutritionSource(StrEnum):
     estimate = "estimate"
 
 
+class ServingUnit(StrEnum):
+    """Unit for structured serving sizes."""
+
+    g = "g"
+    ml = "ml"
+    piece = "piece"
+    serve = "serve"
+
+
 class SearchNutritionInfo(BaseModel):
     """Nutritional information for a single food component (DB-persistable)."""
 
@@ -25,8 +34,14 @@ class SearchNutritionInfo(BaseModel):
     source_url: str | None = None
     """Primary source URL for the nutritional data (None for estimates)."""
 
-    serving_size: str
-    """e.g. '1 burger (189 g)'"""
+    serving_amount: float
+    """Numeric serving amount, e.g. 100, 1, 6."""
+
+    serving_unit: ServingUnit
+    """Unit for the serving amount, e.g. g, ml, piece, serve."""
+
+    serving_description: str | None = None
+    """Optional human-readable label, e.g. '1 burger (189 g)'."""
 
     energy_kj: float
     """Energy in kilojoules."""

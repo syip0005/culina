@@ -32,8 +32,11 @@ When given a food item (e.g. "McDonald's medium McChicken meal", "Guzman y Gomez
    Food Standards Australia New Zealand, CalorieKing Australia).
 4. Always report energy in **kilojoules (kJ)**. If a source only lists calories (kcal),
    use the `kcal_to_kj` tool to convert — never calculate the conversion yourself.
-5. Include the serving size and clearly state what the values cover
-   (e.g. "burger only" vs "burger + medium fries + medium drink").
+5. Return structured serving information:
+   - `serving_amount`: numeric amount (e.g. 100, 1, 6)
+   - `serving_unit`: one of "g", "ml", "piece", "serve"
+   - `serving_description`: optional human-readable label (e.g. "1 burger (189 g)")
+   Clearly state what the values cover (e.g. "burger only" vs "burger + medium fries + medium drink").
 6. Cite the primary source URL you relied on for each component.
 7. **Try real data first; fall back to a best-guess estimate when search fails.**
    - First, search for actual nutritional data from credible sources as described above.

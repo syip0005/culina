@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from culina_backend.database.models import NutritionEntryModel, UserModel
-from culina_backend.model.nutrition import NutritionSource
+from culina_backend.model.nutrition import NutritionSource, ServingUnit
 from culina_backend.model.user_nutrition import SYSTEM_USER_ID, NutritionEntry
 from culina_backend.service.errors import ForbiddenError, NotFoundError
 from culina_backend.service.nutrition_entry import NutritionEntryService
@@ -33,7 +33,9 @@ def _domain_entry(user_id, food_item="Test Food", **kw) -> NutritionEntry:
     defaults = dict(
         user_id=user_id,
         food_item=food_item,
-        serving_size="100 g",
+        serving_amount=100.0,
+        serving_unit=ServingUnit.g,
+        serving_description="100 g",
         energy_kj=500.0,
         protein_g=10.0,
         fat_g=5.0,
@@ -54,7 +56,12 @@ class TestCreate:
         user_alice: UserModel,
     ):
         data = _domain_entry(
-            user_alice.id, "Flat White", serving_size="1 cup", energy_kj=450.0
+            user_alice.id,
+            "Flat White",
+            serving_amount=1.0,
+            serving_unit=ServingUnit.serve,
+            serving_description="1 cup",
+            energy_kj=450.0,
         )
         result = await nutrition_entry_service.create_entry(user_alice.id, data)
 

@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, computed_field
 
-from culina_backend.model.nutrition import NutritionSource
+from culina_backend.model.nutrition import NutritionSource, ServingUnit
 
 SYSTEM_USER_ID = UUID("00000000-0000-0000-0000-000000000000")
 """Sentinel user ID for shared AFCD base data."""
@@ -33,7 +33,9 @@ class NutritionEntry(BaseModel):
     food_item: str
     brand: str = ""
     source_url: str = ""
-    serving_size: str
+    serving_amount: float
+    serving_unit: ServingUnit
+    serving_description: str | None = None
     energy_kj: float
     protein_g: float
     fat_g: float
