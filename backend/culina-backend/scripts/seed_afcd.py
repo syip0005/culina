@@ -49,9 +49,7 @@ def download() -> None:
 def process() -> None:
     """Run the processing script to convert Excel → JSON."""
     print("\n=== Step 2: Processing AFCD Excel → JSON ===")
-    result = subprocess.run(
-        [sys.executable, str(PROCESS_SCRIPT)], check=False
-    )
+    result = subprocess.run([sys.executable, str(PROCESS_SCRIPT)], check=False)
     if result.returncode != 0:
         print("Processing failed.", file=sys.stderr)
         sys.exit(1)
