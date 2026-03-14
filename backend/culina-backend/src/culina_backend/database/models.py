@@ -17,6 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from culina_backend.config import ai_settings
 from culina_backend.database.base import Base, TimestampMixin
 
 
@@ -68,7 +69,9 @@ class NutritionEntryModel(Base, TimestampMixin):
             "food_item || ' ' || coalesce(brand, '') || ' ' || coalesce(notes, '')"
         ),
     )
-    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536))
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(ai_settings.EMBEDDING_DIMENSIONS)
+    )
 
     # Relationships
     user: Mapped["UserModel"] = relationship(back_populates="nutrition_entries")
@@ -181,7 +184,9 @@ class MealPhoto(Base):
     content_type: Mapped[str | None] = mapped_column(String)
     original_filename: Mapped[str | None] = mapped_column(Text)
     caption: Mapped[str | None] = mapped_column(Text)
-    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536))
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(ai_settings.EMBEDDING_DIMENSIONS)
+    )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     # Relationships
