@@ -2,7 +2,8 @@
 - Find general alternatives if AFCD information isn't enough (FatSecret?)
 - Passive macro understanding from photos, predictions? (based on previous eating history, time of day)
 - Macro trajectory prediction [Done]
-- Design for database for users, cached products (Redis?)
+- Design for database for users, cached products (Redis?) [Done]
+- Solve for serving sizes
 - Routes
 - Auth
 - Evals for AI
