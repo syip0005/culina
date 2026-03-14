@@ -9,6 +9,7 @@ from __future__ import annotations
 from culina_backend.service.lookup import LookupService
 from culina_backend.service.meal import MealService
 from culina_backend.service.nutrition_entry import NutritionEntryService
+from culina_backend.service.summary import SummaryService
 from culina_backend.service.user import UserService
 
 
@@ -28,6 +29,12 @@ def get_meal_service() -> MealService:
     from culina_backend.service import meal_service
 
     return meal_service
+
+
+def get_summary_service() -> SummaryService:
+    from culina_backend.service import summary_service
+
+    return summary_service
 
 
 def get_lookup_service() -> LookupService:

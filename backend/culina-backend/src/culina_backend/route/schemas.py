@@ -137,3 +137,20 @@ LookupResponse = Annotated[
     Union[FollowUpResponse, NutritionResultResponse],
     "Discriminated by the 'kind' field",
 ]
+
+
+# ── Summary ─────────────────────────────────────────────────────────
+
+
+class Macros(BaseModel):
+    energy_kj: float
+    protein_g: float
+    fat_g: float
+    carbs_g: float
+
+
+class DailySummaryResponse(BaseModel):
+    date: str  # ISO date string e.g. "2026-03-15"
+    consumed: Macros
+    targets: Macros
+    remaining: Macros
