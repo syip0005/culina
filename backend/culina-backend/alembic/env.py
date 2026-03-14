@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+import os
+
 from culina_backend.config import secrets
 from culina_backend.database.base import Base
 
@@ -13,7 +15,10 @@ from culina_backend.database.base import Base
 import culina_backend.database.models  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", secrets.DATABASE_URL)
+
+# Allow overriding the DB URL via environment variable (used by tests).
+db_url = os.environ.get("DATABASE_URL", secrets.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

@@ -9,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from culina_backend.config import general_settings
 from culina_backend.database.models import NutritionEntryModel
-from culina_backend.model.user_nutrition import SYSTEM_USER_ID, NutritionEntry
+from culina_backend.model.user_nutrition import (
+    SYSTEM_USER_ID,
+    NutritionEntry,
+    build_search_text,
+)
 from culina_backend.service.converters import (
     nutrition_entry_from_orm,
     nutrition_entry_to_orm,
@@ -123,9 +127,10 @@ class NutritionEntryService:
                     ):
                         setattr(override, key, value)
 
-                override_entry = nutrition_entry_from_orm(override)
                 override.embedding = await self._embedding.embed(
-                    override_entry.search_text
+                    build_search_text(
+                        override.food_item, override.brand, override.notes
+                    )
                 )
 
                 session.add(override)

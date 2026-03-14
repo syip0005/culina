@@ -11,6 +11,16 @@ SYSTEM_USER_ID = UUID("00000000-0000-0000-0000-000000000000")
 """Sentinel user ID for shared AFCD base data."""
 
 
+def build_search_text(food_item: str, brand: str | None, notes: str | None) -> str:
+    """Build the search text used for embedding and trigram search."""
+    parts = [food_item]
+    if brand:
+        parts.append(brand)
+    if notes:
+        parts.append(notes)
+    return " ".join(parts)
+
+
 class NutritionEntry(BaseModel):
     """Core persisted nutrition entry — one model for all sources (AFCD, search, manual).
 
@@ -39,10 +49,5 @@ class NutritionEntry(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def search_text(self) -> str:
-        """Combined text for future search/embedding use."""
-        parts = [self.food_item]
-        if self.brand:
-            parts.append(self.brand)
-        if self.notes:
-            parts.append(self.notes)
-        return " ".join(parts)
+        """Combined text for search/embedding use."""
+        return build_search_text(self.food_item, self.brand, self.notes)

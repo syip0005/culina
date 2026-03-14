@@ -18,7 +18,7 @@ class AiSettings(BaseSettings):
         "google/gemini-3-flash-preview"
     )
     EMBEDDING_MODEL: str = "qwen/qwen3-embedding-8b"
-    EMBEDDING_DIMENSIONS: int = 4096
+    EMBEDDING_DIMENSIONS: int = 1536
 
     @classmethod
     def settings_customise_sources(cls, settings_cls, **kwargs):

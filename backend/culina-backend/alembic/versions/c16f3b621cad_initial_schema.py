@@ -97,7 +97,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column(
-            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=4096), nullable=True
+            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=1536), nullable=True
         ),
         sa.Column(
             "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
@@ -222,7 +222,7 @@ def upgrade() -> None:
         sa.Column("original_filename", sa.Text(), nullable=True),
         sa.Column("caption", sa.Text(), nullable=True),
         sa.Column(
-            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=4096), nullable=True
+            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=1536), nullable=True
         ),
         sa.Column(
             "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
