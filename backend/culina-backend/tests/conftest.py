@@ -21,6 +21,7 @@ from culina_backend.database.models import NutritionEntryModel, UserModel
 from culina_backend.model.user_nutrition import SYSTEM_USER_ID
 from culina_backend.service.embedding import EmbeddingService
 from culina_backend.service.nutrition_entry import NutritionEntryService
+from culina_backend.service.user import UserService
 
 # ---------------------------------------------------------------------------
 # Test database URL
@@ -123,6 +124,13 @@ def nutrition_entry_service(
         session_factory=session_factory,
         embedding_service=embedding_service,
     )
+
+
+@pytest.fixture
+def user_service(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> UserService:
+    return UserService(session_factory=session_factory)
 
 
 # ---------------------------------------------------------------------------
