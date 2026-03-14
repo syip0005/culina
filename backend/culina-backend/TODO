@@ -4,10 +4,19 @@
 - Macro trajectory prediction [Done]
 - Design for database for users, cached products (Redis?) [Done]
 - Nutrition Service Layer [Done]
-- Solve for serving sizes (must be solved before MVP)
+- Solve for serving sizes (must be solved before MVP) [Done]
 - Row level security (RLS)
 - Photo service
 - Routes
 - Multi-item routes / batch routes
 - Auth [Done]
 - Evals for AI
+
+Bugs
+
+- Embedding searches always appear even if irrelevant, we need to set a better threshold
+- Search bar doesn't feel fluid, it's either the debounce or something, but there has to be a UX trick here.
+
+Improvements
+
+- Current colour scheme and layout is great, just need a better font. It's pushing too much brutalist.
