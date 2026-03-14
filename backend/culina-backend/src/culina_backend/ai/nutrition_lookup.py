@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from pydantic_ai.exceptions import UsageLimitExceeded
 from pydantic_ai.messages import ModelMessage, UserContent
 from pydantic_ai.usage import UsageLimits
 
@@ -40,11 +41,24 @@ class NutritionLookup:
         Returns:
             LookupResponse with the agent output and updated message history.
         """
-        result = await search_agent.run(
-            user_prompt,
-            message_history=message_history,
-            usage_limits=UsageLimits(tool_calls_limit=5),
-        )
+        try:
+            result = await search_agent.run(
+                user_prompt,
+                message_history=message_history,
+                usage_limits=UsageLimits(tool_calls_limit=5),
+            )
+        except UsageLimitExceeded:
+            fallback = FollowUpQuestion(
+                follow_up_question=(
+                    "I couldn't find reliable nutrition info within my search limit. "
+                    "Could you try being more specific, or rephrase your request?"
+                ),
+                follow_up_buttons=["Try again", "Be more specific"],
+            )
+            return LookupResponse(
+                output=fallback,
+                messages=message_history or [],
+            )
         return LookupResponse(
             output=result.output,
             messages=result.all_messages(),
