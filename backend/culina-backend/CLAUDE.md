@@ -70,3 +70,7 @@
 - Visibility rule: user sees own entries + system entries, minus entries they've overridden
 - `search_text` is a computed/generated field: `food_item || brand || notes`
 - Soft delete on users (deleted_at column), hard delete elsewhere
+
+## Alembic
+
+We are still in production. Do not bother with migrations. Just delete the first one and do the initial migraiton again. Remember to also reset the local db and run migrations again.

@@ -3,7 +3,10 @@
 - Passive macro understanding from photos, predictions? (based on previous eating history, time of day)
 - Macro trajectory prediction [Done]
 - Design for database for users, cached products (Redis?) [Done]
+- Nutrition Service Layer [Done]
 - Solve for serving sizes
+- Row level security (RLS)
+- Photo service
 - Routes
-- Auth
+- Auth [Done]
 - Evals for AI
