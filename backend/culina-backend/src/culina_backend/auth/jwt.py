@@ -33,7 +33,7 @@ def verify_token(token: str) -> dict:
         payload = jwt.decode(
             token,
             signing_key.key,
-            algorithms=["RS256"],
+            algorithms=["ES256"],
             issuer=secrets.SUPABASE_JWT_ISSUER,
             audience="authenticated",
         )
