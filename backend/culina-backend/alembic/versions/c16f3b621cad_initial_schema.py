@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: 937953439339
+Revision ID: c16f3b621cad
 Revises:
-Create Date: 2026-03-14 11:36:47.060676
+Create Date: 2026-03-14 12:27:04.829365
 
 """
 
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "937953439339"
+revision: str = "c16f3b621cad"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -97,7 +97,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column(
-            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=1536), nullable=True
+            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=4096), nullable=True
         ),
         sa.Column(
             "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
@@ -222,7 +222,7 @@ def upgrade() -> None:
         sa.Column("original_filename", sa.Text(), nullable=True),
         sa.Column("caption", sa.Text(), nullable=True),
         sa.Column(
-            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=1536), nullable=True
+            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=4096), nullable=True
         ),
         sa.Column(
             "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
