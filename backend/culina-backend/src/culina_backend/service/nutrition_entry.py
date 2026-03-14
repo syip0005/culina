@@ -130,9 +130,7 @@ class NutritionEntryService:
                         setattr(override, key, value)
 
                 override.embedding = await self._embedding.embed(
-                    build_search_text(
-                        override.food_item, override.brand, override.notes
-                    )
+                    build_search_text(override.food_item, override.brand)
                 )
 
                 session.add(override)
@@ -203,9 +201,27 @@ class NutritionEntryService:
     ) -> list[NutritionEntry]:
         query_embedding = await self._embedding.embed(query)
         base = self._visible_entries_query(user_id)
+        distance = NutritionEntryModel.embedding.cosine_distance(query_embedding)
+
+        # DEBUG: show top results WITHOUT threshold to see actual distances
+        debug_q = (
+            base.where(NutritionEntryModel.embedding.is_not(None))
+            .add_columns(distance.label("dist"))
+            .order_by(distance)
+            .limit(limit)
+        )
+        async with self._session_factory() as session:
+            debug_rows = await session.execute(debug_q)
+            print(f"\n[SEMANTIC DEBUG] query={query!r}, threshold={general_settings.SEMANTIC_DISTANCE_THRESHOLD}")
+            for row in debug_rows:
+                entry = row[0]
+                dist = row[1]
+                print(f"  {dist:.4f}  {entry.food_item} (id={entry.id})")
+
         q = (
             base.where(NutritionEntryModel.embedding.is_not(None))
-            .order_by(NutritionEntryModel.embedding.cosine_distance(query_embedding))
+            .where(distance <= general_settings.SEMANTIC_DISTANCE_THRESHOLD)
+            .order_by(distance)
             .limit(limit)
         )
         async with self._session_factory() as session:

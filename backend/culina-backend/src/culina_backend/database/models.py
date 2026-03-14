@@ -81,7 +81,7 @@ class NutritionEntryModel(Base, TimestampMixin):
     search_text: Mapped[str | None] = mapped_column(
         Text,
         Computed(
-            "food_item || ' ' || coalesce(brand, '') || ' ' || coalesce(notes, '')"
+            "food_item || ' ' || coalesce(brand, '')"
         ),
     )
     embedding: Mapped[list[float] | None] = mapped_column(
