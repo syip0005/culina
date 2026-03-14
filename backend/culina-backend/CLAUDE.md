@@ -12,7 +12,8 @@
 ### What belongs inside `ai/`
 - Agent definitions (`ai/agent/`) — inherently AI-specific
 - pydantic-ai tool functions (`ai/tool/`)
-- AI orchestration classes (e.g. `ai/search.py`) — tightly coupled to agents
+- AI orchestration classes (e.g. `ai/nutrition_lookup.py`) — tightly coupled to agents
+- Conversation storage (`ai/conversation_store.py`) — protocol + implementations for multi-turn history
 - `ai/` is the "how we talk to LLMs" layer, not the "everything smart" layer
 
 ### What belongs outside `ai/`
@@ -26,7 +27,13 @@
 
 ### AI Agent Output (`model/nutrition.py`)
 - `SearchNutritionInfo`, `SearchNutritionResult`, `SearchNutritionNotFound` — the AI agent's output contract, used during search interactions
+- `SearchNutritionInfo.is_estimate` — `True` when values are best-guess estimates (source=`NutritionSource.estimate`, `source_url=None`)
 - `NutritionInfo` — extends `SearchNutritionInfo` with `date_retrieved`
+
+### AI Orchestration (`ai/nutrition_lookup.py`)
+- `NutritionLookup` — stateless service; caller passes message history in, gets `LookupResponse` (output + updated messages) back
+- Accepts `str | Sequence[UserContent]` for text or multimodal (image) input
+- `ConversationStore` protocol in `ai/conversation_store.py` — storage-agnostic history management; `InMemoryConversationStore` for dev
 
 ### Persisted User Data (`model/user_nutrition.py`)
 - `NutritionEntry` — core persisted model for all sources (AFCD, search, manual), discriminated by `NutritionSource` enum

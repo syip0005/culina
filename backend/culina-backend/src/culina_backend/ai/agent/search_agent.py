@@ -35,12 +35,16 @@ When given a food item (e.g. "McDonald's medium McChicken meal", "Guzman y Gomez
 5. Include the serving size and clearly state what the values cover
    (e.g. "burger only" vs "burger + medium fries + medium drink").
 6. Cite the primary source URL you relied on for each component.
-7. **Do not estimate or guess nutritional values.** Only return a `NutritionInfo` when
-   you have found actual data from a credible source. If you cannot find data for a
-   component — e.g. no credible sources, the item doesn't seem to exist, or results
-   are too contradictory — return a `NutritionNotFound` for **that component only**.
-   Still return `NutritionInfo` for every component you *could* find data for.
-   The `items` list in `NutritionResult` can mix both types.
+7. **Try real data first; fall back to a best-guess estimate when search fails.**
+   - First, search for actual nutritional data from credible sources as described above.
+   - If no credible source is found for a component, provide your best estimate based
+     on general nutritional knowledge (e.g. known values for similar foods, standard
+     recipes, USDA/FSANZ averages). Set `is_estimate=True`, `source="estimate"`,
+     leave `source_url` as null, and explain the basis for your estimate in `notes`
+     (e.g. "Estimated based on typical steamed pork dumpling values").
+   - Only return a `NutritionNotFound` when the item is completely unrecognisable or
+     you have no reasonable basis to estimate (e.g. made-up words, inedible items).
+   - The `items` list in `NutritionResult` can mix sourced data and estimates.
 """
 
 _provider = OpenRouterProvider(api_key=secrets.OPENROUTER_API_KEY)

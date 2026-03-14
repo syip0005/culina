@@ -1,9 +1,11 @@
-"""Interactive REPL for testing NutritionSearch."""
+"""Interactive REPL for testing NutritionLookup."""
 
 import asyncio
 
+from pydantic_ai.messages import ModelMessage
+
 from culina_backend.ai.model.follow_up import FollowUpQuestion
-from culina_backend.ai.search import NutritionSearch
+from culina_backend.ai.nutrition_lookup import NutritionLookup
 from culina_backend.model import (
     SearchNutritionInfo,
     SearchNutritionNotFound,
@@ -12,7 +14,8 @@ from culina_backend.model import (
 
 
 def _print_info(item: SearchNutritionInfo, prefix: str = "") -> None:
-    print(f"\n  {prefix}{item.food_item}")
+    estimate_tag = " [ESTIMATE]" if item.is_estimate else ""
+    print(f"\n  {prefix}{item.food_item}{estimate_tag}")
     print(f"  Serving:  {item.serving_size}")
     print(f"  Energy:   {item.energy_kj:.0f} kJ")
     print(f"  Protein:  {item.protein_g:.1f} g")
@@ -20,7 +23,8 @@ def _print_info(item: SearchNutritionInfo, prefix: str = "") -> None:
     print(f"  Carbs:    {item.carbs_g:.1f} g")
     if item.notes:
         print(f"  Notes:    {item.notes}")
-    print(f"  Source:   {item.source_url}")
+    if item.source_url:
+        print(f"  Source:   {item.source_url}")
 
 
 def _print_not_found(item: SearchNutritionNotFound, prefix: str = "") -> None:
@@ -33,8 +37,9 @@ def _print_not_found(item: SearchNutritionNotFound, prefix: str = "") -> None:
 
 
 async def main() -> None:
-    search = NutritionSearch()
-    print("Nutrition Search REPL  (type 'quit' to exit, 'reset' to clear history)\n")
+    lookup = NutritionLookup()
+    messages: list[ModelMessage] = []
+    print("Nutrition Lookup REPL  (type 'quit' to exit, 'reset' to clear history)\n")
 
     while True:
         try:
@@ -48,11 +53,13 @@ async def main() -> None:
         if message.lower() == "quit":
             break
         if message.lower() == "reset":
-            search.reset()
+            messages = []
             print("-- history cleared --\n")
             continue
 
-        result = await search.send(message)
+        response = await lookup.send(message, message_history=messages or None)
+        messages = response.messages
+        result = response.output
 
         if isinstance(result, SearchNutritionResult):
             multi = len(result.items) > 1

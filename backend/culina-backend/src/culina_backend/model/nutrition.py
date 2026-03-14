@@ -10,6 +10,7 @@ class NutritionSource(StrEnum):
     afcd = "afcd"
     search = "search"
     manual = "manual"
+    estimate = "estimate"
 
 
 class SearchNutritionInfo(BaseModel):
@@ -21,8 +22,8 @@ class SearchNutritionInfo(BaseModel):
     brand: str
     """Brand of food if relevant."""
 
-    source_url: str
-    """Primary source URL for the nutritional data."""
+    source_url: str | None = None
+    """Primary source URL for the nutritional data (None for estimates)."""
 
     serving_size: str
     """e.g. '1 burger (189 g)'"""
@@ -38,6 +39,9 @@ class SearchNutritionInfo(BaseModel):
 
     carbs_g: float
     """Total carbohydrates in grams."""
+
+    is_estimate: bool = False
+    """True when values are best-guess estimates rather than sourced data."""
 
     source: NutritionSource = NutritionSource.search
     """Where the nutrition data originated."""

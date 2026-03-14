@@ -1,10 +1,10 @@
 - Incorporate AFCD information, with search functionality. [Done]
-- Find general alternatives if AFCD information isn't enough (FatSecret?)
+- Find general alternatives if AFCD information isn't enough [Done] (just use lookup)
 - Passive macro understanding from photos, predictions? (based on previous eating history, time of day)
 - Macro trajectory prediction [Done]
 - Design for database for users, cached products (Redis?) [Done]
 - Nutrition Service Layer [Done]
-- Solve for serving sizes
+- Solve for serving sizes (must be solved before MVP)
 - Row level security (RLS)
 - Photo service
 - Routes
