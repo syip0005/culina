@@ -6,10 +6,13 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from culina_backend.database.models import (
+    MealItem as MealItemORM,
+    MealModel,
     NutritionEntryModel,
     UserModel,
     UserSettings as UserSettingsORM,
 )
+from culina_backend.model.meal import Meal, MealItem
 from culina_backend.model.nutrition import NutritionSource
 from culina_backend.model.user import User, UserSettings
 from culina_backend.model.user_nutrition import NutritionEntry
@@ -108,4 +111,62 @@ def user_to_orm(user: User) -> UserModel:
         email=user.email,
         display_name=user.display_name,
         deleted_at=user.deleted_at,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Meal converters
+# ---------------------------------------------------------------------------
+
+
+def meal_item_from_orm(model: MealItemORM) -> MealItem:
+    return MealItem(
+        id=model.id,
+        meal_id=model.meal_id,
+        nutrition_entry_id=model.nutrition_entry_id,
+        quantity=model.quantity,
+        custom_serving_size=model.custom_serving_size,
+        notes=model.notes,
+        created_at=model.created_at,
+    )
+
+
+def meal_item_to_orm(item: MealItem) -> MealItemORM:
+    return MealItemORM(
+        id=item.id,
+        meal_id=item.meal_id,
+        nutrition_entry_id=item.nutrition_entry_id,
+        quantity=item.quantity,
+        custom_serving_size=item.custom_serving_size,
+        notes=item.notes,
+    )
+
+
+def meal_from_orm(model: MealModel) -> Meal:
+    return Meal(
+        id=model.id,
+        user_id=model.user_id,
+        meal_type=model.meal_type,
+        name=model.name,
+        eaten_at=model.eaten_at,
+        notes=model.notes,
+        created_at=model.created_at,
+        updated_at=model.updated_at,
+        items=[meal_item_from_orm(i) for i in model.items],
+    )
+
+
+def _strip_tz(dt: datetime) -> datetime:
+    """Strip timezone info for TIMESTAMP WITHOUT TIME ZONE columns."""
+    return dt.replace(tzinfo=None) if dt.tzinfo is not None else dt
+
+
+def meal_to_orm(meal: Meal) -> MealModel:
+    return MealModel(
+        id=meal.id,
+        user_id=meal.user_id,
+        meal_type=meal.meal_type,
+        name=meal.name,
+        eaten_at=_strip_tz(meal.eaten_at),
+        notes=meal.notes,
     )

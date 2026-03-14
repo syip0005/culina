@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
@@ -17,9 +17,15 @@ from sqlalchemy.ext.asyncio import (
 
 from culina_backend.config import secrets
 from culina_backend.database.base import Base
-from culina_backend.database.models import NutritionEntryModel, UserModel
+from culina_backend.database.models import (
+    MealItem as MealItemORM,
+    MealModel,
+    NutritionEntryModel,
+    UserModel,
+)
 from culina_backend.model.user_nutrition import SYSTEM_USER_ID
 from culina_backend.service.embedding import EmbeddingService
+from culina_backend.service.meal import MealService
 from culina_backend.service.nutrition_entry import NutritionEntryService
 from culina_backend.service.user import UserService
 
@@ -133,6 +139,13 @@ def user_service(
     return UserService(session_factory=session_factory)
 
 
+@pytest.fixture
+def meal_service(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> MealService:
+    return MealService(session_factory=session_factory)
+
+
 # ---------------------------------------------------------------------------
 # User + entry factory helpers
 # ---------------------------------------------------------------------------
@@ -202,4 +215,40 @@ def make_entry(
         afcd_food_key=afcd_food_key,
         base_entry_id=base_entry_id,
         embedding=embedding,
+    )
+
+
+def make_meal(
+    user_id: UUID,
+    *,
+    meal_type: str | None = "lunch",
+    name: str | None = "Test Meal",
+    eaten_at: datetime | None = None,
+    notes: str | None = None,
+) -> MealModel:
+    return MealModel(
+        id=uuid4(),
+        user_id=user_id,
+        meal_type=meal_type,
+        name=name,
+        eaten_at=eaten_at or datetime(2025, 6, 15, 12, 0),
+        notes=notes,
+    )
+
+
+def make_meal_item(
+    meal_id: UUID,
+    nutrition_entry_id: UUID,
+    *,
+    quantity: float = 1.0,
+    custom_serving_size: str | None = None,
+    notes: str | None = None,
+) -> MealItemORM:
+    return MealItemORM(
+        id=uuid4(),
+        meal_id=meal_id,
+        nutrition_entry_id=nutrition_entry_id,
+        quantity=quantity,
+        custom_serving_size=custom_serving_size,
+        notes=notes,
     )
