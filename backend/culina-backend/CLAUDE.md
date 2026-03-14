@@ -38,4 +38,35 @@
 ## Commands
 
 - `uv run ruff check` — lint
+- `uv run ruff check --fix` — lint with auto-fix
 - `uv run ruff format` — format
+- `uv run pytest` — run tests (needs PostgreSQL with `culina_test` database)
+- `uv run alembic upgrade head` — apply migrations
+- `uv run alembic revision --autogenerate -m "description"` — create migration
+
+## Database
+- PostgreSQL 16 + pgvector, async via asyncpg + SQLAlchemy 2.0
+- ORM models in `database/models.py`, connection setup in `database/base.py`
+- Alembic migrations in `alembic/versions/`
+- `docker-compose.dev.yml` starts local dev DB (user/pass/db: culina, port 5432)
+- Tests use separate `culina_test` database with TRUNCATE-based cleanup between tests
+
+## Service Layer (`service/`)
+- `UserService` — CRUD, soft delete (deleted_at), filtering, restores
+- `NutritionEntryService` — list, text search (trigram), vector search (embedding), create, override
+- `EmbeddingService` — wraps pydantic-ai Embedder via OpenRouter
+- `converters.py` — ORM ↔ Pydantic domain model conversion (keep domain models free of SQLAlchemy imports)
+- `errors.py` — custom exceptions: NotFoundError, ForbiddenError, DuplicateError, EmbeddingError
+
+## Testing Conventions
+- pytest-asyncio with `asyncio_mode = "auto"` and session-scoped event loop
+- Fixtures in `tests/conftest.py`: db_session, user_service, nutrition_entry_service, system_user, user_alice, user_bob
+- `make_entry()` factory for NutritionEntryModel with sensible defaults
+- EmbeddingService is mocked with deterministic hash-based embeddings
+
+## Key Conventions
+- All DB operations are async (AsyncSession)
+- SYSTEM_USER_ID (UUID zero) = shared AFCD base data; user overrides are full copies with `base_entry_id`
+- Visibility rule: user sees own entries + system entries, minus entries they've overridden
+- `search_text` is a computed/generated field: `food_item || brand || notes`
+- Soft delete on users (deleted_at column), hard delete elsewhere
