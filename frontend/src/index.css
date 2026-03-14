@@ -402,6 +402,16 @@ label {
   color: var(--color-bg);
 }
 
+.lookup-message.thinking {
+  font-style: italic;
+  animation: thinking-fade 2.5s ease-in-out infinite;
+}
+
+@keyframes thinking-fade {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
 .lookup-buttons {
   display: flex;
   flex-wrap: wrap;

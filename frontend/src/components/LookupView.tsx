@@ -12,6 +12,80 @@ import type {
   ServingUnit,
 } from '../types.ts'
 
+const THINKING_PHRASES = [
+  'Manducating bulgogi',
+  'Lucubrating custards',
+  'Excogitating charcoals',
+  'Peragrating potatoes',
+  'Oblectating mussels',
+  'Ruminating kimchi',
+  'Mullering menus',
+  'Disputating dumplings',
+  'Savouring suppositions',
+  'Cogitating cookfires',
+  'Speculating suppers',
+  'Contemplating tubers',
+  'Deliberating delicacies',
+  'Meditating marinades',
+  'Reckoning roasts',
+  'Pondering provender',
+  'Excursating entrées',
+  'Palating possibilities',
+  'Gustating gently',
+  'Ideating indulgences',
+  'Deglazing',
+  'Infusing',
+  'Reducing',
+  'Rendering',
+  'Braising',
+  'Caramelising',
+  'Charring',
+  'Curating flavours',
+  'Profiling taste',
+  'Balancing notes',
+  'Composing plates',
+  'Elevating choices',
+  'Foraging ideas',
+  'Fermenting thoughts',
+  'Gustating options',
+  'Relishing possibilities',
+  'Indulging curiosity',
+  'Titillating tastebuds',
+  'Plating inspiration',
+]
+
+function useThinkingPhrase(active: boolean) {
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * THINKING_PHRASES.length))
+
+  useEffect(() => {
+    if (!active) return
+    setIndex(Math.floor(Math.random() * THINKING_PHRASES.length))
+    const id = setInterval(() => {
+      setIndex((prev) => {
+        let next: number
+        do { next = Math.floor(Math.random() * THINKING_PHRASES.length) } while (next === prev)
+        return next
+      })
+    }, 2500)
+    return () => clearInterval(id)
+  }, [active])
+
+  return THINKING_PHRASES[index]
+}
+
+function ThinkingIndicator() {
+  const [dots, setDots] = useState('')
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDots((prev) => prev.length >= 3 ? '' : prev + '.')
+    }, 400)
+    return () => clearInterval(id)
+  }, [])
+
+  return <span>{dots}</span>
+}
+
 function isScalableUnit(unit: ServingUnit): boolean {
   return unit === 'g' || unit === 'ml'
 }
@@ -51,6 +125,7 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
   const [addingQuantity, setAddingQuantity] = useState<{ item: SearchNutritionInfo; quantity: string } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const sentInitial = useRef(false)
+  const thinkingPhrase = useThinkingPhrase(loading)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -268,7 +343,11 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
               </div>
             ))}
 
-            {loading && <div className="lookup-message">Thinking...</div>}
+            {loading && (
+              <div className="lookup-message thinking">
+                {thinkingPhrase}<ThinkingIndicator />
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         </div>
