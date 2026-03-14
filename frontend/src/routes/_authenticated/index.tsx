@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth } from '../../auth.tsx'
 import { getDailySummary, listMeals, getEntry } from '../../api.ts'
-import { todayRange, todayDateStr } from '../../utils/date.ts'
+import { dateRange, todayDateStr, shiftDate, formatDateLabel } from '../../utils/date.ts'
 import { MealSection } from '../../components/MealSection.tsx'
 import { AddItemPanel } from '../../components/AddItemPanel.tsx'
 import { displayEnergy, energyLabel } from '../../utils/energy.ts'
@@ -14,11 +14,18 @@ export const Route = createFileRoute('/_authenticated/')({
 
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snacks']
 
+interface DayData {
+  summary: DailySummaryResponse | null
+  mealsByType: Record<MealType, Meal | null>
+}
+
 function HomePage() {
   const { user } = useAuth()
   const tz = user?.settings?.timezone ?? 'Australia/Sydney'
   const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
+  const today = todayDateStr(tz)
 
+  const [currentDate, setCurrentDate] = useState(today)
   const [summary, setSummary] = useState<DailySummaryResponse | null>(null)
   const [mealsByType, setMealsByType] = useState<Record<MealType, Meal | null>>({
     breakfast: null, lunch: null, dinner: null, snacks: null,
@@ -26,17 +33,17 @@ function HomePage() {
   const [entries, setEntries] = useState<Map<string, NutritionEntry>>(new Map())
   const [addingFor, setAddingFor] = useState<MealType | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sliding, setSliding] = useState<'left' | 'right' | null>(null)
 
-  const loadData = useCallback(async () => {
-    const dateStr = todayDateStr(tz)
-    const { start, end } = todayRange(tz)
+  // Cache for preloaded days
+  const cache = useRef<Map<string, DayData>>(new Map())
 
+  const fetchDay = useCallback(async (dateStr: string): Promise<DayData> => {
+    const { start, end } = dateRange(dateStr, tz)
     const [summaryData, mealsData] = await Promise.all([
       getDailySummary(dateStr),
       listMeals({ eaten_after: start, eaten_before: end }),
     ])
-
-    setSummary(summaryData)
 
     const byType: Record<MealType, Meal | null> = {
       breakfast: null, lunch: null, dinner: null, snacks: null,
@@ -46,20 +53,21 @@ function HomePage() {
         byType[meal.meal_type as MealType] = meal
       }
     }
-    setMealsByType(byType)
 
-    // Collect unique entry IDs and fetch missing ones
+    return { summary: summaryData, mealsByType: byType }
+  }, [tz])
+
+  const fetchEntries = useCallback((mealsMap: Record<MealType, Meal | null>) => {
     const entryIds = new Set<string>()
-    for (const meal of mealsData) {
+    for (const meal of Object.values(mealsMap)) {
+      if (!meal) continue
       for (const item of meal.items) {
         entryIds.add(item.nutrition_entry_id)
       }
     }
-
     setEntries((prev) => {
       const toFetch = [...entryIds].filter((id) => !prev.has(id))
       if (toFetch.length === 0) return prev
-      // Kick off fetches and merge when done
       Promise.all(toFetch.map((id) => getEntry(id))).then((fetched) => {
         setEntries((current) => {
           const merged = new Map(current)
@@ -71,14 +79,107 @@ function HomePage() {
       })
       return prev
     })
+  }, [])
+
+  const applyDay = useCallback((data: DayData) => {
+    setSummary(data.summary)
+    setMealsByType(data.mealsByType)
+    fetchEntries(data.mealsByType)
     setLoading(false)
-  }, [tz])
+  }, [fetchEntries])
+
+  // Preload adjacent days in background
+  const preload = useCallback((dateStr: string) => {
+    for (const offset of [-1, -2]) {
+      const d = shiftDate(dateStr, offset)
+      if (!cache.current.has(d)) {
+        fetchDay(d).then((data) => cache.current.set(d, data))
+      }
+    }
+  }, [fetchDay])
+
+  const loadData = useCallback(async () => {
+    const target = currentDate
+    const cached = cache.current.get(target)
+    if (cached) {
+      applyDay(cached)
+      // Refresh in background for today to keep data fresh
+      if (target === today) {
+        fetchDay(target).then((data) => {
+          cache.current.set(target, data)
+          applyDay(data)
+        })
+      }
+    } else {
+      const data = await fetchDay(target)
+      cache.current.set(target, data)
+      applyDay(data)
+    }
+    preload(target)
+  }, [currentDate, today, fetchDay, applyDay, preload])
 
   useEffect(() => {
     loadData()
   }, [loadData])
 
+  const navigate = useCallback((direction: -1 | 1) => {
+    if (addingFor) return // don't navigate while adding items
+    const next = shiftDate(currentDate, direction)
+    // Invalidate cache for the day we're leaving if it's today (could be stale)
+    if (currentDate === today) cache.current.delete(currentDate)
+    setSliding(direction === -1 ? 'left' : 'right')
+    setCurrentDate(next)
+    // Clear slide animation after it plays
+    setTimeout(() => setSliding(null), 200)
+  }, [currentDate, today, addingFor])
+
+  // Swipe navigation (mobile)
+  const touchRef = useRef<{ x: number; y: number; t: number } | null>(null)
+  useEffect(() => {
+    const onStart = (e: TouchEvent) => {
+      if (addingFor) return
+      const touch = e.touches[0]
+      touchRef.current = { x: touch.clientX, y: touch.clientY, t: Date.now() }
+    }
+    const onEnd = (e: TouchEvent) => {
+      if (!touchRef.current || addingFor) return
+      const touch = e.changedTouches[0]
+      const dx = touch.clientX - touchRef.current.x
+      const dy = touch.clientY - touchRef.current.y
+      const dt = Date.now() - touchRef.current.t
+      touchRef.current = null
+      // Require: horizontal > 60px, more horizontal than vertical (ratio 2:1), under 400ms
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 2 && dt < 400) {
+        navigate(dx < 0 ? 1 : -1)
+      }
+    }
+    window.addEventListener('touchstart', onStart, { passive: true })
+    window.addEventListener('touchend', onEnd, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', onStart)
+      window.removeEventListener('touchend', onEnd)
+    }
+  }, [navigate, addingFor])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (addingFor) return
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        navigate(-1)
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        navigate(1)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [navigate, addingFor])
+
   const handleOptimisticDelete = useCallback((macros: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => {
+    cache.current.delete(currentDate)
     setSummary((prev) => {
       if (!prev) return prev
       return {
@@ -97,10 +198,10 @@ function HomePage() {
         },
       }
     })
-  }, [])
+  }, [currentDate])
 
   const handleOptimisticAdd = useCallback((mealType: MealType, entry: NutritionEntry, quantity: number) => {
-    // Update summary bar immediately
+    cache.current.delete(currentDate)
     setSummary((prev) => {
       if (!prev) return prev
       return {
@@ -120,7 +221,6 @@ function HomePage() {
       }
     })
 
-    // Add entry to cache so MealSection can display it
     setEntries((prev) => {
       if (prev.has(entry.id)) return prev
       const next = new Map(prev)
@@ -128,7 +228,6 @@ function HomePage() {
       return next
     })
 
-    // Inject a temporary item into the meal
     const tempItem: MealItem = {
       id: `temp-${Date.now()}`,
       meal_id: null,
@@ -142,7 +241,6 @@ function HomePage() {
       if (existing) {
         return { ...prev, [mealType]: { ...existing, items: [...existing.items, tempItem] } }
       }
-      // Meal doesn't exist yet — create a placeholder; loadData will replace it
       return {
         ...prev,
         [mealType]: {
@@ -158,15 +256,33 @@ function HomePage() {
         },
       }
     })
-  }, [])
+  }, [currentDate])
 
   if (loading) return <div className="container">LOADING...</div>
+
+  const isToday = currentDate === today
+  const dateLabel = formatDateLabel(currentDate, today)
 
   return (
     <div className="container">
       <div className="header">
         <h1>Culina</h1>
         <Link to="/settings">Settings</Link>
+      </div>
+
+      <div className="day-nav">
+        <button className="day-nav-btn" onClick={() => navigate(-1)} aria-label="Previous day">&larr;</button>
+        <div className="day-nav-label">
+          <span className={`day-nav-text ${sliding === 'left' ? 'slide-left' : sliding === 'right' ? 'slide-right' : ''}`}>
+            {dateLabel}
+          </span>
+          {!isToday && (
+            <button className="day-nav-today" onClick={() => { setCurrentDate(today); setSliding(null) }}>
+              Today
+            </button>
+          )}
+        </div>
+        <button className="day-nav-btn" onClick={() => navigate(1)} aria-label="Next day">&rarr;</button>
       </div>
 
       {summary && (
@@ -204,7 +320,7 @@ function HomePage() {
           entries={entries}
           energyUnit={eUnit}
           onAddItem={() => setAddingFor(mt)}
-          onRefresh={loadData}
+          onRefresh={() => loadData()}
           onOptimisticDelete={handleOptimisticDelete}
         />
       ))}
@@ -214,7 +330,7 @@ function HomePage() {
           mealType={addingFor}
           meal={mealsByType[addingFor]}
           onClose={() => setAddingFor(null)}
-          onItemAdded={loadData}
+          onItemAdded={() => loadData()}
           onOptimisticAdd={(entry, quantity) => handleOptimisticAdd(addingFor, entry, quantity)}
         />
       )}
