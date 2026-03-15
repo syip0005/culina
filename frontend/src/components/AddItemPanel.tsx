@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../auth.tsx'
 import { useDebounce } from '../utils/debounce.ts'
-import { searchEntries, addMealItem, createMeal, deleteNutritionEntry } from '../api.ts'
+import { searchEntries, addMealItem, createMeal, createNutritionEntry, deleteNutritionEntry } from '../api.ts'
 import { dateMidpointISO } from '../utils/date.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { LookupView } from './LookupView.tsx'
 import { EditEntryPanel } from './EditEntryPanel.tsx'
-import type { Meal, MealType, NutritionEntry, ServingUnit } from '../types.ts'
+import type { Meal, MealType, NutritionEntry, SearchNutritionInfo, ServingUnit } from '../types.ts'
 
 interface Props {
   mealType: MealType
@@ -48,6 +48,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [expandedInfoId, setExpandedInfoId] = useState<string | null>(null)
   const [editingEntry, setEditingEntry] = useState<NutritionEntry | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
 
   // Close info popup on click outside
@@ -170,6 +171,13 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
             style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.75rem' }}
           >
             Find New Items
+          </button>
+          <button
+            className="secondary"
+            onClick={() => setShowCreate(true)}
+            style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.75rem' }}
+          >
+            Create Manually
           </button>
         </div>
 
@@ -324,6 +332,55 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
           onMealCreated={(m) => setMeal(m)}
           onItemAdded={onItemAdded}
           onBack={() => setShowLookup(false)}
+        />
+      )}
+
+      {showCreate && (
+        <EditEntryPanel
+          item={{
+            food_item: query.trim(),
+            brand: '',
+            source_url: null,
+            serving_amount: 100,
+            serving_unit: 'g',
+            serving_description: null,
+            energy_kj: 0,
+            protein_g: 0,
+            fat_g: 0,
+            carbs_g: 0,
+            is_estimate: false,
+            source: 'manual',
+            notes: null,
+          } satisfies SearchNutritionInfo}
+          title="Create Entry"
+          energyUnit={eUnit}
+          onSave={async (created) => {
+            try {
+              const entry = await createNutritionEntry({
+                food_item: created.food_item,
+                brand: created.brand || '',
+                serving_amount: created.serving_amount,
+                serving_unit: created.serving_unit,
+                serving_description: created.serving_description,
+                energy_kj: created.energy_kj,
+                protein_g: created.protein_g,
+                fat_g: created.fat_g,
+                carbs_g: created.carbs_g,
+                source: created.source,
+                notes: created.notes,
+              })
+              setShowCreate(false)
+              setResults((prev) => [entry, ...prev])
+              setAddedIds((prev) => new Set(prev).add(entry.id))
+              if (onOptimisticAdd) onOptimisticAdd(entry, 1)
+              const m = await ensureMeal()
+              await addMealItem(m.id, { nutrition_entry_id: entry.id, quantity: 1 })
+              onItemAdded()
+            } catch (e) {
+              alert(e instanceof Error ? e.message : 'Failed to create entry')
+            }
+          }}
+          onClose={() => setShowCreate(false)}
         />
       )}
 

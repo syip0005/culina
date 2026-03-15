@@ -308,7 +308,7 @@ function HomePage() {
     setMealsByType((prev) => {
       const existing = prev[mealType]
       if (existing) {
-        return { ...prev, [mealType]: { ...existing, items: [...existing.items, tempItem] } }
+        return { ...prev, [mealType]: { ...existing, items: [tempItem, ...existing.items] } }
       }
       return {
         ...prev,

@@ -18,13 +18,14 @@ interface EditableFields {
 type Props = {
   className?: string
   energyUnit?: string
+  title?: string
   onClose: () => void
 } & (
   | { entry: NutritionEntry; item?: never; onSave: (updated: NutritionEntry) => void }
   | { item: SearchNutritionInfo; entry?: never; onSave: (updated: SearchNutritionInfo) => void }
 )
 
-export function EditEntryPanel({ entry, item, className, onSave, onClose }: Props) {
+export function EditEntryPanel({ entry, item, className, title, onSave, onClose }: Props) {
   const source: EditableFields = entry ?? item!
   const [foodItem, setFoodItem] = useState(source.food_item)
   const [brand, setBrand] = useState(source.brand)
@@ -106,7 +107,7 @@ export function EditEntryPanel({ entry, item, className, onSave, onClose }: Prop
     <div className={className ?? "overlay second"}>
       <div className="overlay-inner">
         <div className="overlay-header">
-          <h2>Edit Entry</h2>
+          <h2>{title ?? 'Edit Entry'}</h2>
           <button className="secondary" onClick={onClose} style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}>
             Cancel
           </button>
