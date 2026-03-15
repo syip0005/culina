@@ -33,3 +33,9 @@ export function consume<T>(key: string, fn: () => Promise<T>): Promise<T> {
 export function invalidate(key: string) {
   cache.delete(key)
 }
+
+/** Invalidate and immediately re-prefetch (fire-and-forget). */
+export function refetch<T>(key: string, fn: () => Promise<T>): void {
+  cache.delete(key)
+  prefetch(key, fn)
+}
