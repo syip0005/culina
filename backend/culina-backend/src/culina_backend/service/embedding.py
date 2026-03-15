@@ -1,5 +1,6 @@
 """Embedding service using pydantic-ai's Embedder with OpenRouter."""
 
+import asyncio
 import time
 
 from loguru import logger
@@ -20,11 +21,14 @@ class EmbeddingService:
             embedding_model, settings=EmbeddingSettings(dimensions=dimensions)
         )
         self._dimensions = dimensions
+        self._timeout = 30.0
 
     async def embed(self, text: str) -> list[float]:
         start = time.perf_counter()
         try:
-            result = await self._embedder.embed_query(text)
+            result = await asyncio.wait_for(
+                self._embedder.embed_query(text), timeout=self._timeout
+            )
             duration_ms = round((time.perf_counter() - start) * 1000, 1)
             logger.info("Embedding completed", duration_ms=duration_ms)
             return list(result.embeddings[0])
@@ -36,7 +40,9 @@ class EmbeddingService:
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         start = time.perf_counter()
         try:
-            result = await self._embedder.embed_documents(texts)
+            result = await asyncio.wait_for(
+                self._embedder.embed_documents(texts), timeout=self._timeout
+            )
             duration_ms = round((time.perf_counter() - start) * 1000, 1)
             logger.info(
                 "Batch embedding completed",
