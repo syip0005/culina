@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from loguru import logger
 from pydantic_ai.exceptions import UsageLimitExceeded
 from pydantic_ai.messages import ModelMessage, UserContent
 from pydantic_ai.usage import UsageLimits
@@ -41,6 +43,7 @@ class NutritionLookup:
         Returns:
             LookupResponse with the agent output and updated message history.
         """
+        start = time.perf_counter()
         try:
             result = await search_agent.run(
                 user_prompt,
@@ -48,6 +51,10 @@ class NutritionLookup:
                 usage_limits=UsageLimits(tool_calls_limit=5),
             )
         except UsageLimitExceeded:
+            duration_ms = round((time.perf_counter() - start) * 1000, 1)
+            logger.warning(
+                "Agent hit usage limit, returning fallback", duration_ms=duration_ms
+            )
             fallback = FollowUpQuestion(
                 follow_up_question=(
                     "I couldn't find reliable nutrition info within my search limit. "
@@ -59,6 +66,12 @@ class NutritionLookup:
                 output=fallback,
                 messages=message_history or [],
             )
+
+        duration_ms = round((time.perf_counter() - start) * 1000, 1)
+        output_type = type(result.output).__name__
+        logger.info(
+            "Agent completed", duration_ms=duration_ms, output_type=output_type
+        )
         return LookupResponse(
             output=result.output,
             messages=result.all_messages(),

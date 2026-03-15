@@ -6,6 +6,7 @@ import base64
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
+from loguru import logger
 from pydantic_ai import BinaryContent
 from pydantic_ai.messages import UserContent
 
@@ -57,6 +58,12 @@ class LookupService:
             image_media_type: MIME type for the image (default image/jpeg).
             conversation_id: Existing conversation to continue, or None to start new.
         """
+        logger.info(
+            "Lookup started",
+            has_conversation=conversation_id is not None,
+            has_image=image_base64 is not None,
+        )
+
         # Resolve or create conversation
         if conversation_id is not None:
             owner = await self._store.get_user_id(conversation_id)
