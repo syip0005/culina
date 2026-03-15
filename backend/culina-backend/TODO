@@ -37,11 +37,12 @@ Improvements
 - On the UI, we need to allow image search and probably need some sort of S3 bucket at htat point.
 - 429 a user if they make more than X amount of calls a day. Might have to track this in redis as well. Want to avoid 3rd party observability.
 - Move all our cached stuff to Redis, there's heaps now, inc. conversations, suggestions and somethigng else.
-- Make the thinking slower like the animation
+- Make the thinking slower like the animation [Done]
 - Allow item additional information [Done]
-- Allow modification of menu items, i.e., serving size.
-- Allow modification of existing items
-- Allow modification of the item being added
+- Allow modification of menu items, i.e., serving size. [Done]
+- Allow modification of existing items [Done]
+- Allow modification of the item being added [Done]
+- Allow creating new item manually
 
 Pre-alpha go live
 
