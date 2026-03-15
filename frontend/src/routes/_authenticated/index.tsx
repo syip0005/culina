@@ -28,7 +28,7 @@ interface DayData {
 }
 
 function HomePage() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const tz = user?.settings?.timezone ?? 'Australia/Sydney'
   const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
   const [showRemaining, setShowRemaining] = useState(
@@ -278,7 +278,11 @@ function HomePage() {
     <div className="container">
       <div className="header">
         <h1>Culina<span className="alpha-tag">ALPHA</span></h1>
-        <Link to="/settings">Settings</Link>
+        <div className="header-actions">
+          <Link to="/settings">Settings</Link>
+          <span className="header-sep">/</span>
+          <button className="link-button" onClick={signOut}>Logout</button>
+        </div>
       </div>
 
       <div className="day-nav">

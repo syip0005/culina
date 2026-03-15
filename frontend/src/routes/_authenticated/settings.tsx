@@ -60,7 +60,11 @@ function SettingsPage() {
     <div className="container">
       <div className="header">
         <h1>Settings</h1>
-        <Link to="/">&larr; Back</Link>
+        <div className="header-actions">
+          <Link to="/">&larr; Back</Link>
+          <span className="header-sep">/</span>
+          <button className="link-button" onClick={signOut}>Logout</button>
+        </div>
       </div>
 
       <div className="form-group">
