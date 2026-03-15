@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../auth.tsx'
 import { useDebounce } from '../utils/debounce.ts'
 import { searchEntries, addMealItem, createMeal, deleteNutritionEntry } from '../api.ts'
@@ -41,6 +41,20 @@ export function AddItemPanel({ mealType, meal: initialMeal, suggestions = [], on
   const [adding, setAdding] = useState<{ entry: NutritionEntry; value: string } | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [expandedInfoId, setExpandedInfoId] = useState<string | null>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
+
+  // Close info popup on click outside
+  useEffect(() => {
+    if (!expandedInfoId) return
+    const handleClick = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setExpandedInfoId(null)
+      }
+    }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [expandedInfoId])
 
   const debouncedQuery = useDebounce(query, 300)
 
@@ -177,16 +191,42 @@ export function AddItemPanel({ mealType, meal: initialMeal, suggestions = [], on
                       {isAdded && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>ADDED</span>}
                     </div>
                   </div>
-                  {isOwned && !isAdded && (
+                  <span className="search-result-actions">
                     <button
-                      className="btn-delete-entry"
-                      onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeletingId(isConfirmingDelete ? null : entry.id) }}
-                      title="Delete entry"
+                      className="btn-info"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setExpandedInfoId(expandedInfoId === entry.id ? null : entry.id)
+                      }}
+                      title="Entry details"
                     >
-                      ×
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <circle cx="8" cy="8" r="7" />
+                        <line x1="8" y1="7" x2="8" y2="12" />
+                        <circle cx="8" cy="4.5" r="0.5" fill="currentColor" stroke="none" />
+                      </svg>
                     </button>
-                  )}
+                    {isOwned && !isAdded && (
+                      <button
+                        className="btn-delete-entry"
+                        onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeletingId(isConfirmingDelete ? null : entry.id) }}
+                        title="Delete entry"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </span>
                 </div>
+                {expandedInfoId === entry.id && (
+                  <div className="entry-info-popup" ref={popupRef} onClick={(e) => e.stopPropagation()}>
+                    <div><strong>Source:</strong> {entry.source}</div>
+                    <div><strong>Added:</strong> {new Date(entry.date_retrieved).toLocaleDateString()}</div>
+                    {entry.brand && <div><strong>Brand:</strong> {entry.brand}</div>}
+                    <div><strong>Serving:</strong> {servingLabel(entry.serving_amount, entry.serving_unit, entry.serving_description)}</div>
+                    {entry.notes && <div><strong>Notes:</strong> {entry.notes}</div>}
+                    {entry.source_url && <div><a href={entry.source_url} target="_blank" rel="noopener noreferrer">Source link ↗</a></div>}
+                  </div>
+                )}
                 {isConfirmingDelete && (
                   <div className="delete-confirm" onClick={(e) => e.stopPropagation()}>
                     <span className="text-xs">Delete this entry?</span>

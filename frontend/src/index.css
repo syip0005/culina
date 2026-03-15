@@ -566,6 +566,63 @@ label {
   background: none;
 }
 
+/* Info button */
+.btn-info {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  padding: 0.1rem;
+  cursor: pointer;
+  line-height: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.btn-info:hover {
+  color: var(--color-fg);
+  background: none;
+}
+
+/* Actions container in search results */
+.search-result-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.search-result:hover .search-result-actions {
+  opacity: 1;
+}
+
+/* Entry info popup */
+.entry-info-popup {
+  background: var(--color-bg);
+  border: var(--border);
+  padding: 0.5rem 0.65rem;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.entry-info-popup a {
+  font-size: 0.75rem;
+}
+
+/* Mobile: always show summary toggle and action buttons */
+@media (hover: none) {
+  .summary-toggle {
+    opacity: 1;
+  }
+
+  .search-result-actions {
+    opacity: 1;
+  }
+}
+
 /* Search result with delete support */
 .search-result-top {
   display: flex;
@@ -573,21 +630,13 @@ label {
   justify-content: space-between;
 }
 
-.search-result-owned .btn-delete-entry {
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.search-result-owned:hover .btn-delete-entry {
-  opacity: 1;
-}
 
 .btn-delete-entry {
   background: none;
   border: none;
   color: var(--color-muted);
   font-size: 1rem;
-  padding: 0.1rem 0.4rem;
+  padding: 0.1rem 0.2rem 0.1rem 0.1rem;
   cursor: pointer;
   line-height: 1;
   flex-shrink: 0;
