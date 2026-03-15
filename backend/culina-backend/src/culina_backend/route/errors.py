@@ -12,6 +12,8 @@ from culina_backend.service.errors import (
     ForbiddenError,
     InUseError,
     NotFoundError,
+    PayloadTooLargeError,
+    RateLimitError,
 )
 
 
@@ -47,5 +49,19 @@ def handle_service_errors(func: Callable) -> Callable:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(exc)
             ) from exc
+        except RateLimitError as exc:
+            logger.warning("Rate limit: {}", str(exc))
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(exc)
+            ) from exc
+        except PayloadTooLargeError as exc:
+            logger.info("Payload too large: {}", str(exc))
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=str(exc),
+            ) from exc
+        except Exception:
+            logger.exception("Unhandled error in route handler")
+            raise
 
     return wrapper
