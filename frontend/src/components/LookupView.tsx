@@ -80,7 +80,7 @@ function ThinkingIndicator() {
   useEffect(() => {
     const id = setInterval(() => {
       setDots((prev) => prev.length >= 3 ? '' : prev + '.')
-    }, 400)
+    }, 700)
     return () => clearInterval(id)
   }, [])
 
