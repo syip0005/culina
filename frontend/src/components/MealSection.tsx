@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Meal, MealType, NutritionEntry } from '../types.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { displayEnergy, energyLabel } from '../utils/energy.ts'
@@ -24,6 +24,13 @@ const LABELS: Record<MealType, string> = {
 
 export function MealSection({ mealType, meal, entries, energyUnit = 'kj', highlight, onAddItem, onRefresh, onOptimisticDelete }: Props) {
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
+
+  // Clear optimistic removals when fresh data arrives from the server
+  const itemIds = meal?.items.map((i) => i.id).join(',') ?? ''
+  useEffect(() => {
+    setRemovedIds(new Set())
+  }, [itemIds])
+
   const items = (meal?.items ?? []).filter((item) => !removedIds.has(item.id))
 
   let totalEnergy = 0
@@ -56,7 +63,16 @@ export function MealSection({ mealType, meal, entries, energyUnit = 'kj', highli
     }
     // Optimistically remove from UI immediately
     setRemovedIds((prev) => new Set(prev).add(itemId))
-    await deleteMealItem(meal.id, itemId)
+    try {
+      await deleteMealItem(meal.id, itemId)
+    } catch {
+      // Delete failed — restore the item in the UI
+      setRemovedIds((prev) => {
+        const next = new Set(prev)
+        next.delete(itemId)
+        return next
+      })
+    }
     onRefresh()
   }
 
