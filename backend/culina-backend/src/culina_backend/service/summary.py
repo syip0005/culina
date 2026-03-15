@@ -173,11 +173,43 @@ class SummaryService:
                 carbs_g=float(row.carbs_g),
             )
 
+            # Look up goal history for the target date, same logic as
+            # period_stats: today uses now(), past days use next-day start.
+            today_local = datetime.now(tz).date()
+            if target_date == today_local:
+                goal_cutoff = datetime.now(timezone.utc).replace(tzinfo=None)
+            else:
+                goal_cutoff = day_end_utc
+
+            goal_q = (
+                select(GoalChange)
+                .where(
+                    GoalChange.user_id == user_id,
+                    GoalChange.effective_from <= goal_cutoff,
+                )
+                .order_by(GoalChange.effective_from.desc())
+                .limit(1)
+            )
+            goal_result = await session.execute(goal_q)
+            goal = goal_result.scalar_one_or_none()
+
+            # Lazy seed if no goal history exists yet
+            if goal is None:
+                goal = GoalChange(
+                    user_id=user_id,
+                    daily_energy_target_kj=settings.daily_energy_target_kj,
+                    daily_protein_target_g=settings.daily_protein_target_g,
+                    daily_fat_target_g=settings.daily_fat_target_g,
+                    daily_carbs_target_g=settings.daily_carbs_target_g,
+                )
+                session.add(goal)
+                await session.flush()
+
             targets = Macros(
-                energy_kj=settings.daily_energy_target_kj or 0.0,
-                protein_g=settings.daily_protein_target_g or 0.0,
-                fat_g=settings.daily_fat_target_g or 0.0,
-                carbs_g=settings.daily_carbs_target_g or 0.0,
+                energy_kj=goal.daily_energy_target_kj or 0.0,
+                protein_g=goal.daily_protein_target_g or 0.0,
+                fat_g=goal.daily_fat_target_g or 0.0,
+                carbs_g=goal.daily_carbs_target_g or 0.0,
             )
 
             remaining = Macros(
@@ -310,6 +342,9 @@ class SummaryService:
             total_fat = 0.0
             total_carbs = 0.0
 
+            today_local = datetime.now(tz).date()
+            now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+
             for day in _date_range(start_date, end_date):
                 row = daily_rows.get(day)
                 consumed = Macros(
@@ -319,15 +354,21 @@ class SummaryService:
                     carbs_g=float(row.carbs_g) if row else 0.0,
                 )
 
-                # Find applicable goal: most recent effective_from <= day start
-                day_start_utc = (
-                    datetime(day.year, day.month, day.day, tzinfo=tz)
-                    .astimezone(timezone.utc)
-                    .replace(tzinfo=None)
-                )
+                # Find applicable goal: most recent effective_from <= cutoff.
+                # For today, use current time so mid-day goal changes apply
+                # immediately. For past days, use start of next day so goals
+                # changed during that day are still picked up.
+                if day == today_local:
+                    goal_cutoff = now_utc
+                else:
+                    next_day_start_utc = (
+                        datetime(day.year, day.month, day.day, tzinfo=tz)
+                        + timedelta(days=1)
+                    ).astimezone(timezone.utc).replace(tzinfo=None)
+                    goal_cutoff = next_day_start_utc
                 applicable_goal = goals[0]  # fallback to earliest
                 for g in goals:
-                    if g.effective_from <= day_start_utc:
+                    if g.effective_from <= goal_cutoff:
                         applicable_goal = g
                     else:
                         break
