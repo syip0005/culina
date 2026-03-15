@@ -34,7 +34,11 @@ Improvements
 - Reduce TTL to 60 seconds, and increase max concurrent to 5. [Done]
 - Summary statistics for week / fortnight / month/ year, but these need to be quick, so maybe when user logins we also recalculate this I don't know what's the quickest. Precomputed? Or is it already indexed so its really quick? i'D probably also want graphs, produce statistics etc with this.
 - On the UI, we need to allow image search and probably need some sort of S3 bucket at htat point.
+- 429 a user if they make more than X amount of calls a day. Might have to track this in redis as well. Want to avoid 3rd party observability.
 
+Pre-alpha go live
+
+- Logs
 - Security audit
 - Code quality audit
 - Write updated docs
