@@ -181,10 +181,10 @@ class SummaryService:
             )
 
             remaining = Macros(
-                energy_kj=max(0.0, targets.energy_kj - consumed.energy_kj),
-                protein_g=max(0.0, targets.protein_g - consumed.protein_g),
-                fat_g=max(0.0, targets.fat_g - consumed.fat_g),
-                carbs_g=max(0.0, targets.carbs_g - consumed.carbs_g),
+                energy_kj=targets.energy_kj - consumed.energy_kj,
+                protein_g=targets.protein_g - consumed.protein_g,
+                fat_g=targets.fat_g - consumed.fat_g,
+                carbs_g=targets.carbs_g - consumed.carbs_g,
             )
 
             return DailySummaryResponse(
