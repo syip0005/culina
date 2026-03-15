@@ -775,6 +775,111 @@ label {
   font-size: 0.85rem;
 }
 
+/* Month calendar view */
+.stats-calendar {
+  border: var(--border);
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+}
+
+.stats-calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  margin-bottom: 0.25rem;
+}
+
+.stats-calendar-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.stats-calendar-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0;
+  min-height: 2.5rem;
+}
+
+.stats-calendar-day {
+  font-size: 0.6rem;
+  color: var(--color-muted);
+  line-height: 1;
+}
+
+.stats-calendar-status {
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.stats-calendar-cell.on-target .stats-calendar-status {
+  color: #16a34a;
+}
+
+.stats-calendar-cell.off-target .stats-calendar-status {
+  color: #dc2626;
+}
+
+.stats-calendar-cell.empty .stats-calendar-status {
+  color: var(--color-muted);
+  opacity: 0.4;
+  font-size: 0.75rem;
+}
+
+/* Year view */
+.stats-year {
+  border: var(--border);
+  margin-bottom: 1rem;
+}
+
+.stats-year-row {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.85rem;
+}
+
+.stats-year-row:last-child {
+  border-bottom: none;
+}
+
+.stats-year-month {
+  font-weight: 700;
+  width: 2.5rem;
+  flex-shrink: 0;
+}
+
+.stats-year-bar {
+  flex: 1;
+  height: 1.2rem;
+  border: var(--border);
+  margin: 0 0.75rem;
+  position: relative;
+}
+
+.stats-year-fill {
+  display: block;
+  height: 100%;
+  background: #000;
+  transition: width 0.3s ease;
+}
+
+.stats-year-count {
+  font-weight: 900;
+  width: 2rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
 /* Added state */
 .added {
   opacity: 0.5;
