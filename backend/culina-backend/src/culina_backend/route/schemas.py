@@ -1,16 +1,25 @@
 """Request/response schemas for API routes."""
 
 from datetime import datetime
+from enum import Enum
 from typing import Annotated, Literal, Union
 from uuid import UUID
+from zoneinfo import available_timezones
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from culina_backend.model.nutrition import (
     NutritionSource,
     SearchNutritionResult,
     ServingUnit,
 )
+
+
+class ImageMediaType(str, Enum):
+    JPEG = "image/jpeg"
+    PNG = "image/png"
+    WEBP = "image/webp"
+    GIF = "image/gif"
 
 
 # ── User ──────────────────────────────────────────────────────────────
@@ -29,6 +38,14 @@ class UpdateSettingsRequest(BaseModel):
     timezone: str | None = None
     preferred_energy_unit: str | None = None
     extra: dict | None = None
+
+    @field_validator("timezone")
+    @classmethod
+    def validate_timezone(cls, v: str | None) -> str | None:
+        if v is not None and v not in available_timezones():
+            msg = f"Invalid timezone: {v}"
+            raise ValueError(msg)
+        return v
 
 
 # ── Nutrition Entry ───────────────────────────────────────────────────
@@ -109,7 +126,7 @@ class UpdateMealRequest(BaseModel):
 class LookupRequest(BaseModel):
     text: str | None = None
     image_base64: str | None = None
-    image_media_type: str = "image/jpeg"
+    image_media_type: ImageMediaType = ImageMediaType.JPEG
     conversation_id: str | None = None
 
     @model_validator(mode="after")
