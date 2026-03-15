@@ -34,9 +34,6 @@ Improvements
 - Reduce TTL to 60 seconds, and increase max concurrent to 5. [Done]
 - Summary statistics for week / fortnight / month/ year, but these need to be quick, so maybe when user logins we also recalculate this I don't know what's the quickest. Precomputed? Or is it already indexed so its really quick? i'D probably also want graphs, produce statistics etc with this. [Done]
 - Info button needs to be shown. [Done]
-- On the UI, we need to allow image search and probably need some sort of S3 bucket at htat point.
-- 429 a user if they make more than X amount of calls a day. Might have to track this in redis as well. Want to avoid 3rd party observability.
-- Move all our cached stuff to Redis, there's heaps now, inc. conversations, suggestions and somethigng else.
 - Make the thinking slower like the animation [Done]
 - Allow item additional information [Done]
 - Allow modification of menu items, i.e., serving size. [Done]
@@ -46,8 +43,9 @@ Improvements
 
 Pre-alpha go live
 
-- Logs / emitting logs
+- Logs / emitting logs [Done]
 - Security audit
+- Validate nutrition entry values (non-negative energy_kj, protein_g, fat_g, carbs_g; reasonable upper bounds)
 - Code quality audit
 - Tests
 - Write updated docs
@@ -55,3 +53,6 @@ Pre-alpha go live
 After
 
 - Better mobile UX and touching, especially say for info/delete buttons
+- Move all our cached stuff to Redis, there's heaps now, inc. conversations, suggestions and somethigng else.
+- On the UI, we need to allow image search and probably need some sort of S3 bucket at htat point.
+- 429 a user if they make more than X amount of calls a day. Might have to track this in redis as well. Want to avoid 3rd party observability.
