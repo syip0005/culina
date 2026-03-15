@@ -1,8 +1,14 @@
 """FastAPI application factory."""
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import time
+import uuid
 
+from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from loguru import logger
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from culina_backend.logging import request_id_var, setup_logging
 from culina_backend.route.auth import router as auth_router
 from culina_backend.route.lookup import router as lookup_router
 from culina_backend.route.meals import router as meals_router
@@ -11,7 +17,45 @@ from culina_backend.route.suggestions import router as suggestions_router
 from culina_backend.route.summary import router as summary_router
 from culina_backend.route.users import router as users_router
 
+setup_logging()
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """Log every request with timing and a unique request ID."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:  # noqa: ANN001
+        request_id = uuid.uuid4().hex[:12]
+        request_id_var.set(request_id)
+
+        method = request.method
+        path = request.url.path
+
+        logger.info("Request started", method=method, path=path)
+        start = time.perf_counter()
+
+        try:
+            response = await call_next(request)
+        except Exception:
+            duration_ms = round((time.perf_counter() - start) * 1000, 1)
+            logger.exception(
+                "Request failed", method=method, path=path, duration_ms=duration_ms
+            )
+            raise
+
+        duration_ms = round((time.perf_counter() - start) * 1000, 1)
+        logger.info(
+            "Request completed",
+            method=method,
+            path=path,
+            status=response.status_code,
+            duration_ms=duration_ms,
+        )
+        return response
+
+
 app = FastAPI(title="Culina")
+
+app.add_middleware(RequestLoggingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

@@ -2,6 +2,7 @@
 
 import jwt
 from jwt import PyJWKClient
+from loguru import logger
 
 from pydantic import BaseModel
 
@@ -38,6 +39,7 @@ def verify_token(token: str) -> dict:
             audience="authenticated",
         )
     except jwt.PyJWTError as exc:
+        logger.warning("JWT verification failed: {}", str(exc))
         raise AuthenticationError(str(exc)) from exc
     return payload
 

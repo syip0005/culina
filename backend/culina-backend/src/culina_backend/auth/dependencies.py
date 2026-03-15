@@ -1,17 +1,15 @@
 """FastAPI dependencies for authentication."""
 
-import logging
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from loguru import logger
 
 from culina_backend.auth.jwt import extract_claims, verify_token
+from culina_backend.logging import user_id_var
 from culina_backend.model.user import User
 from culina_backend.route.dependencies import get_user_service
 from culina_backend.service.errors import AuthenticationError, DuplicateError
 from culina_backend.service.user import UserService
-
-logger = logging.getLogger(__name__)
 
 _bearer = HTTPBearer()
 
@@ -25,6 +23,7 @@ async def get_current_user(
         payload = verify_token(credentials.credentials)
         claims = extract_claims(payload)
     except AuthenticationError as exc:
+        logger.warning("Auth failed: {}", str(exc))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(exc),
@@ -34,6 +33,7 @@ async def get_current_user(
     user = await user_service.get_user_by_external_id(claims.sub)
 
     if user is not None:
+        user_id_var.set(str(user.id))
         # Sync email / display_name if changed
         updates: dict[str, str] = {}
         if claims.email and claims.email != user.email:
@@ -42,6 +42,7 @@ async def get_current_user(
             updates["display_name"] = claims.display_name
         if updates:
             user = await user_service.update_user(user.id, updates)
+        logger.info("Auth success", user_id=str(user.id))
         return user
 
     # Auto-provision new user
@@ -51,13 +52,18 @@ async def get_current_user(
         display_name=claims.display_name,
     )
     try:
-        return await user_service.create_user(new_user)
+        user = await user_service.create_user(new_user)
+        user_id_var.set(str(user.id))
+        logger.info("Auto-provisioned new user", user_id=str(user.id))
+        return user
     except DuplicateError:
         # Race condition — another request created the user first
+        logger.error("User creation race condition for external_id={}", claims.sub)
         user = await user_service.get_user_by_external_id(claims.sub)
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="User creation race condition could not be resolved",
             )
+        user_id_var.set(str(user.id))
         return user
