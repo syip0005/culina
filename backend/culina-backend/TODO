@@ -44,15 +44,16 @@ Improvements
 Pre-alpha go live
 
 - Logs / emitting logs [Done]
-- Security audit
-- Validate nutrition entry values (non-negative energy_kj, protein_g, fat_g, carbs_g; reasonable upper bounds)
-- Code quality audit
-- Tests
-- Write updated docs
+- Security audit [Done]
+- Code quality audit [Done]
+
+- Write updated docs [Done]
 
 After
 
+- Tests
 - Better mobile UX and touching, especially say for info/delete buttons
 - Move all our cached stuff to Redis, there's heaps now, inc. conversations, suggestions and somethigng else.
 - On the UI, we need to allow image search and probably need some sort of S3 bucket at htat point.
 - 429 a user if they make more than X amount of calls a day. Might have to track this in redis as well. Want to avoid 3rd party observability.
+- Validate nutrition entry values (non-negative energy_kj, protein_g, fat_g, carbs_g; reasonable upper bounds)

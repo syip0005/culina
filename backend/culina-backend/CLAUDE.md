@@ -87,4 +87,6 @@
 
 ## Alembic
 
-We are still in production. Do not bother with migrations. Just delete the first one and do the initial migraiton again. Remember to also reset the local db and run migrations again.
+Pre-alpha: migrations are "delete and redo". Just delete the first migration and regenerate it. Remember to also reset the local DB and run migrations again.
+
+When autogenerating migrations, manually add `import pgvector.sqlalchemy.vector` to the generated file — Alembic doesn't detect this import automatically.
