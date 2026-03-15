@@ -3,10 +3,12 @@ import { useAuth } from '../auth.tsx'
 import { useDebounce } from '../utils/debounce.ts'
 import { searchEntries, addMealItem, createMeal, createNutritionEntry, deleteNutritionEntry } from '../api.ts'
 import { dateMidpointISO } from '../utils/date.ts'
+import { isScalableUnit, servingLabel } from '../utils/serving.ts'
+import { PencilIcon } from './Icons.tsx'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { LookupView } from './LookupView.tsx'
 import { EditEntryPanel } from './EditEntryPanel.tsx'
-import type { Meal, MealType, NutritionEntry, SearchNutritionInfo, ServingUnit } from '../types.ts'
+import type { Meal, MealType, NutritionEntry, SearchNutritionInfo, EnergyUnit } from '../types.ts'
 
 interface Props {
   mealType: MealType
@@ -20,23 +22,9 @@ interface Props {
   onOptimisticAdd?: (entry: NutritionEntry, quantity: number) => void
 }
 
-/** Units where the user adjusts a weight/volume amount */
-function isScalableUnit(unit: ServingUnit): boolean {
-  return unit === 'g' || unit === 'ml'
-}
-
-function servingLabel(amount: number, unit: ServingUnit, description: string | null): string {
-  if (isScalableUnit(unit)) {
-    return `${amount}${unit}${description ? ` (${description})` : ''}`
-  }
-  // piece / serve — show description if available, otherwise "1 piece" etc.
-  if (description) return description
-  return `${amount} ${unit}${amount !== 1 ? 's' : ''}`
-}
-
 export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone, suggestions = [], onClose, onItemAdded, onOptimisticAdd }: Props) {
   const { user } = useAuth()
-  const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
+  const eUnit = (user?.settings?.preferred_energy_unit ?? 'kj') as EnergyUnit
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<NutritionEntry[]>([])
   const [searching, setSearching] = useState(false)
@@ -49,6 +37,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
   const [expandedInfoId, setExpandedInfoId] = useState<string | null>(null)
   const [editingEntry, setEditingEntry] = useState<NutritionEntry | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const popupRef = useRef<HTMLDivElement>(null)
 
   // Close info popup on click outside
@@ -182,6 +171,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
         </div>
 
         <div className="overlay-body">
+          {createError && <div className="delete-error text-xs" style={{ marginBottom: '0.5rem' }}>{createError}</div>}
           {searching && results.length === 0 && <div className="text-muted text-sm">Searching...</div>}
 
           {(debouncedQuery.trim() ? results : suggestions).map((entry) => {
@@ -215,10 +205,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
                       }}
                       title="Edit entry"
                     >
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M11.5 1.5l3 3L5 14H2v-3z" />
-                        <line x1="9.5" y1="3.5" x2="12.5" y2="6.5" />
-                      </svg>
+                      <PencilIcon />
                     </button>
                     <button
                       className="btn-info"
@@ -355,6 +342,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
           title="Create Entry"
           energyUnit={eUnit}
           onSave={async (created) => {
+            setCreateError(null)
             try {
               const entry = await createNutritionEntry({
                 food_item: created.food_item,
@@ -377,7 +365,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
               await addMealItem(m.id, { nutrition_entry_id: entry.id, quantity: 1 })
               onItemAdded()
             } catch (e) {
-              alert(e instanceof Error ? e.message : 'Failed to create entry')
+              setCreateError(e instanceof Error ? e.message : 'Failed to create entry')
             }
           }}
           onClose={() => setShowCreate(false)}

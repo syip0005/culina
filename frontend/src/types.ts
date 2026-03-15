@@ -138,6 +138,7 @@ export interface PeriodStatsResponse {
 }
 
 export type GoalMode = 'under' | 'over' | 'within'
+export type EnergyUnit = 'kj' | 'kcal'
 
 export function isSearchNutritionInfo(
   item: SearchNutritionInfo | SearchNutritionNotFound,

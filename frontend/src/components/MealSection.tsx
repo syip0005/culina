@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import type { Meal, MealType, NutritionEntry } from '../types.ts'
+import type { Meal, MealType, NutritionEntry, EnergyUnit, Macros } from '../types.ts'
+import { isScalableUnit } from '../utils/serving.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { displayEnergy, energyLabel } from '../utils/energy.ts'
 import { deleteMealItem, updateMealItem } from '../api.ts'
@@ -8,12 +9,12 @@ interface Props {
   mealType: MealType
   meal: Meal | null
   entries: Map<string, NutritionEntry>
-  energyUnit?: string
+  energyUnit?: EnergyUnit
   highlight?: boolean
   onAddItem: () => void
   onRefresh: () => void
-  onOptimisticDelete?: (macros: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => void
-  onOptimisticUpdate?: (delta: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => void
+  onOptimisticDelete?: (macros: Macros) => void
+  onOptimisticUpdate?: (delta: Macros) => void
 }
 
 const LABELS: Record<MealType, string> = {
@@ -58,7 +59,7 @@ export function MealSection({ mealType, meal, entries, energyUnit = 'kj', highli
     if (!item) return
     const entry = entries.get(item.nutrition_entry_id)
     if (!entry) return
-    const isWeight = entry.serving_unit === 'g' || entry.serving_unit === 'ml'
+    const isWeight = isScalableUnit(entry.serving_unit)
     const displayVal = isWeight
       ? String(Math.round(entry.serving_amount * item.quantity))
       : String(item.quantity)
@@ -78,7 +79,7 @@ export function MealSection({ mealType, meal, entries, energyUnit = 'kj', highli
     const entry = entries.get(item.nutrition_entry_id)
     if (!entry) return
 
-    const isWeight = entry.serving_unit === 'g' || entry.serving_unit === 'ml'
+    const isWeight = isScalableUnit(entry.serving_unit)
     const parsed = parseFloat(editValue)
     if (isNaN(parsed) || parsed <= 0) return
 
@@ -104,7 +105,15 @@ export function MealSection({ mealType, meal, entries, energyUnit = 'kj', highli
     try {
       await updateMealItem(meal.id, item.id, { quantity: newQuantity })
     } catch {
-      // Revert optimistic update on error
+      // Revert optimistic delta on error
+      if (onOptimisticUpdate) {
+        onOptimisticUpdate({
+          energy_kj: -(entry.energy_kj * qtyDelta),
+          protein_g: -(entry.protein_g * qtyDelta),
+          fat_g: -(entry.fat_g * qtyDelta),
+          carbs_g: -(entry.carbs_g * qtyDelta),
+        })
+      }
     }
     setSaving(false)
     onRefresh()
@@ -156,7 +165,7 @@ export function MealSection({ mealType, meal, entries, energyUnit = 'kj', highli
       {items.map((item) => {
         const entry = entries.get(item.nutrition_entry_id)
         const isEditing = editingId === item.id
-        const isWeight = entry && (entry.serving_unit === 'g' || entry.serving_unit === 'ml')
+        const isWeight = entry && isScalableUnit(entry.serving_unit)
         return (
           <div key={item.id} className={`meal-item${isEditing ? ' meal-item-editing' : ''}`}>
             <div className="meal-item-row" onClick={() => !isEditing && startEdit(item.id)}>

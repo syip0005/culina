@@ -21,14 +21,6 @@ export function prefetch<T>(key: string, fn: () => Promise<T>): Promise<T> {
   return promise
 }
 
-/**
- * Consume a prefetched value. Returns the cached promise if available,
- * otherwise calls fn() and caches the result.
- */
-export function consume<T>(key: string, fn: () => Promise<T>): Promise<T> {
-  return prefetch(key, fn)
-}
-
 /** Invalidate a specific cache key (e.g. after a mutation). */
 export function invalidate(key: string) {
   cache.delete(key)
@@ -45,4 +37,9 @@ export function invalidatePrefix(prefix: string) {
 export function refetch<T>(key: string, fn: () => Promise<T>): void {
   cache.delete(key)
   prefetch(key, fn)
+}
+
+/** Clear the entire prefetch cache (e.g. on sign-out). */
+export function clearAll() {
+  cache.clear()
 }

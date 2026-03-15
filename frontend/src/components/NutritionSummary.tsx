@@ -1,4 +1,5 @@
 import { displayEnergy, energyLabel } from '../utils/energy.ts'
+import type { EnergyUnit } from '../types.ts'
 
 interface Props {
   energyKj: number
@@ -6,7 +7,7 @@ interface Props {
   fatG: number
   carbsG: number
   quantity?: number
-  energyUnit?: string
+  energyUnit?: EnergyUnit
 }
 
 export function NutritionSummary({ energyKj, proteinG, fatG, carbsG, quantity = 1, energyUnit = 'kj' }: Props) {

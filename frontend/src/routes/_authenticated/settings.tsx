@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAuth } from '../../auth.tsx'
 import { getSettings, updateSettings } from '../../api.ts'
-import { consume, invalidate } from '../../utils/prefetch.ts'
+import { prefetch, invalidate } from '../../utils/prefetch.ts'
 import { useEffect, useState } from 'react'
 import type { UserSettings, GoalMode } from '../../types.ts'
 
@@ -30,7 +30,7 @@ function SettingsPage() {
   const [withinPct, setWithinPct] = useState('10')
 
   useEffect(() => {
-    consume('settings', () => getSettings()).then((s) => {
+    prefetch('settings', () => getSettings()).then((s) => {
       setSettings(s)
       setEnergyTarget(s.daily_energy_target_kj?.toString() ?? '')
       setProteinTarget(s.daily_protein_target_g?.toString() ?? '')

@@ -7,7 +7,7 @@ import { dateRange, todayDateStr, shiftDate, formatDateLabel } from '../../utils
 import { MealSection } from '../../components/MealSection.tsx'
 import { AddItemPanel } from '../../components/AddItemPanel.tsx'
 import { displayEnergy, energyLabel } from '../../utils/energy.ts'
-import type { Meal, MealItem, MealType, NutritionEntry, DailySummaryResponse } from '../../types.ts'
+import type { Meal, MealItem, MealType, NutritionEntry, DailySummaryResponse, Macros, EnergyUnit } from '../../types.ts'
 
 export const Route = createFileRoute('/_authenticated/')({
   component: HomePage,
@@ -20,6 +20,14 @@ const dayCache = new Map<string, DayData>()
 const suggestionsCache: { data: Record<MealType, NutritionEntry[]> | null; ts: number } = { data: null, ts: 0 }
 const SUGGESTIONS_MAX_AGE = 5 * 60_000 // 5 minutes
 const entriesCache = new Map<string, NutritionEntry>()
+
+/** Clear all module-level caches (call on sign-out to prevent data leaking between sessions). */
+export function clearPageCaches() {
+  dayCache.clear()
+  suggestionsCache.data = null
+  suggestionsCache.ts = 0
+  entriesCache.clear()
+}
 
 function currentMealType(tz: string): MealType {
   const hour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false }).format(new Date()), 10)
@@ -37,7 +45,7 @@ interface DayData {
 function HomePage() {
   const { user, signOut } = useAuth()
   const tz = user?.settings?.timezone ?? 'Australia/Sydney'
-  const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
+  const eUnit = (user?.settings?.preferred_energy_unit ?? 'kj') as EnergyUnit
   const [showRemaining, setShowRemaining] = useState(
     () => (user?.settings?.extra?.summary_display as string) !== 'consumed'
   )
@@ -221,7 +229,7 @@ function HomePage() {
     invalidatePrefix('stats:')
   }, [])
 
-  const handleOptimisticDelete = useCallback((macros: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => {
+  const handleOptimisticDelete = useCallback((macros: Macros) => {
     dayCache.delete(currentDate)
     invalidateStats()
     setSummary((prev) => {
@@ -244,7 +252,7 @@ function HomePage() {
     })
   }, [currentDate, invalidateStats])
 
-  const handleOptimisticUpdate = useCallback((delta: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => {
+  const handleOptimisticUpdate = useCallback((delta: Macros) => {
     dayCache.delete(currentDate)
     invalidateStats()
     setSummary((prev) => {

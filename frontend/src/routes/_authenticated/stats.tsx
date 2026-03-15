@@ -2,9 +2,9 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../../auth.tsx'
 import { getPeriodStats } from '../../api.ts'
-import { consume, invalidate } from '../../utils/prefetch.ts'
+import { prefetch, invalidate } from '../../utils/prefetch.ts'
 import { displayEnergy, energyLabel } from '../../utils/energy.ts'
-import type { PeriodStatsResponse, DayStats } from '../../types.ts'
+import type { PeriodStatsResponse, DayStats, EnergyUnit } from '../../types.ts'
 
 export const Route = createFileRoute('/_authenticated/stats')({
   component: StatsPage,
@@ -150,7 +150,7 @@ function YearView({ daily }: { daily: DayStats[] }) {
 }
 
 /** Daily table for week/fortnight view. */
-function DailyTable({ daily, eUnit }: { daily: DayStats[]; eUnit: string }) {
+function DailyTable({ daily, eUnit }: { daily: DayStats[]; eUnit: EnergyUnit }) {
   return (
     <div className="stats-daily">
       {daily.map((day) => {
@@ -185,7 +185,7 @@ function DailyTable({ daily, eUnit }: { daily: DayStats[]; eUnit: string }) {
 
 function StatsPage() {
   const { user, signOut } = useAuth()
-  const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
+  const eUnit = (user?.settings?.preferred_energy_unit ?? 'kj') as EnergyUnit
 
   const [period, setPeriod] = useState<Period>('week')
   const [refDate, setRefDate] = useState<string | undefined>(undefined)
@@ -200,7 +200,7 @@ function StatsPage() {
       // Use prefetch cache for default view (week, current period)
       const cacheKey = d ? undefined : `stats:${p}`
       const result = cacheKey
-        ? await consume(cacheKey, () => getPeriodStats(p, d))
+        ? await prefetch(cacheKey, () => getPeriodStats(p, d))
         : await getPeriodStats(p, d)
       setData(result)
     } catch (e) {

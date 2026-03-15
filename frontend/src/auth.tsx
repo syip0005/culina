@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase.ts'
 import { getMe } from './api.ts'
+import { clearAll } from './utils/prefetch.ts'
+import { clearPageCaches } from './routes/_authenticated/index.tsx'
 import type { User } from './types.ts'
 
 interface AuthContextValue {
@@ -26,6 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setLoading(false)
       }
+    }).catch(() => {
+      setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -43,6 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    clearAll()
+    clearPageCaches()
   }
 
   return (

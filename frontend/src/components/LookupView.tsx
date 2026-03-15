@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../auth.tsx'
 import { lookup, createNutritionEntry, addMealItem, createMeal } from '../api.ts'
 import { dateMidpointISO } from '../utils/date.ts'
+import { isScalableUnit, servingLabel } from '../utils/serving.ts'
+import { PencilIcon } from './Icons.tsx'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { EditEntryPanel } from './EditEntryPanel.tsx'
 import { isSearchNutritionInfo } from '../types.ts'
@@ -11,7 +13,7 @@ import type {
   LookupResponse,
   SearchNutritionInfo,
   SearchNutritionNotFound,
-  ServingUnit,
+  EnergyUnit,
 } from '../types.ts'
 
 const THINKING_PHRASES = [
@@ -88,18 +90,6 @@ function ThinkingIndicator() {
   return <span>{dots}</span>
 }
 
-function isScalableUnit(unit: ServingUnit): boolean {
-  return unit === 'g' || unit === 'ml'
-}
-
-function servingLabel(amount: number, unit: ServingUnit, description: string | null): string {
-  if (isScalableUnit(unit)) {
-    return `${amount}${unit}${description ? ` (${description})` : ''}`
-  }
-  if (description) return description
-  return `${amount} ${unit}${amount !== 1 ? 's' : ''}`
-}
-
 interface Props {
   initialQuery: string
   mealType: MealType
@@ -119,13 +109,14 @@ interface Message {
 
 export function LookupView({ initialQuery, mealType, mealId, targetDate, timezone, onMealCreated, onItemAdded, onBack }: Props) {
   const { user } = useAuth()
-  const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
+  const eUnit = (user?.settings?.preferred_energy_unit ?? 'kj') as EnergyUnit
   const [messages, setMessages] = useState<Message[]>([])
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [currentMealId, setCurrentMealId] = useState<string | null>(mealId)
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set())
+  const [addError, setAddError] = useState<string | null>(null)
   const [addingQuantity, setAddingQuantity] = useState<{ item: SearchNutritionInfo; quantity: string } | null>(null)
   const [editingItem, setEditingItem] = useState<{ msgIndex: number; itemIndex: number; item: SearchNutritionInfo } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -203,6 +194,7 @@ export function LookupView({ initialQuery, mealType, mealId, targetDate, timezon
       ? num / item.serving_amount
       : num
 
+    setAddError(null)
     try {
       const entry = await createNutritionEntry({
         food_item: item.food_item,
@@ -227,7 +219,7 @@ export function LookupView({ initialQuery, mealType, mealId, targetDate, timezon
       setAddingQuantity(null)
       onItemAdded()
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to add item')
+      setAddError(e instanceof Error ? e.message : 'Failed to add item')
     }
   }
 
@@ -300,10 +292,7 @@ export function LookupView({ initialQuery, mealType, mealId, targetDate, timezon
                                 onClick={() => setEditingItem({ msgIndex: i, itemIndex: j, item: info })}
                                 title="Edit item"
                               >
-                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                  <path d="M11.5 1.5l3 3L5 14H2v-3z" />
-                                  <line x1="9.5" y1="3.5" x2="12.5" y2="6.5" />
-                                </svg>
+                                <PencilIcon size={14} />
                               </button>
                             </div>
                             {isAdded ? (
@@ -370,6 +359,7 @@ export function LookupView({ initialQuery, mealType, mealId, targetDate, timezon
         </div>
 
         <div className="overlay-footer">
+          {addError && <div className="delete-error text-xs" style={{ marginBottom: '0.5rem' }}>{addError}</div>}
           <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
             <input
               type="text"

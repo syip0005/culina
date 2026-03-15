@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { updateNutritionEntry } from '../api.ts'
-import type { NutritionEntry, SearchNutritionInfo, ServingUnit } from '../types.ts'
+import type { NutritionEntry, SearchNutritionInfo, ServingUnit, EnergyUnit } from '../types.ts'
 
 interface EditableFields {
   food_item: string
@@ -17,7 +17,7 @@ interface EditableFields {
 
 type Props = {
   className?: string
-  energyUnit?: string
+  energyUnit?: EnergyUnit
   title?: string
   onClose: () => void
 } & (
