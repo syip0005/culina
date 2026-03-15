@@ -218,6 +218,30 @@ class MealPhoto(Base):
     )
 
 
+class GoalChange(Base):
+    """Event-sourced goal history — one row per target change."""
+
+    __tablename__ = "goal_changes"
+
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    effective_from: Mapped[datetime] = mapped_column(
+        nullable=False, server_default=func.now()
+    )
+    daily_energy_target_kj: Mapped[float | None] = mapped_column(Double)
+    daily_protein_target_g: Mapped[float | None] = mapped_column(Double)
+    daily_fat_target_g: Mapped[float | None] = mapped_column(Double)
+    daily_carbs_target_g: Mapped[float | None] = mapped_column(Double)
+
+    __table_args__ = (
+        Index("ix_goal_changes_user_effective", "user_id", "effective_from"),
+    )
+
+
 class UserSettings(Base, TimestampMixin):
     __tablename__ = "user_settings"
 
