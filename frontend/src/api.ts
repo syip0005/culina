@@ -108,3 +108,8 @@ export function getDailySummary(date?: string) {
   const qs = date ? `?date=${date}` : ''
   return request<DailySummaryResponse>('GET', `/summary/daily${qs}`)
 }
+
+export function getSuggestions(mealType: string, limit = 10) {
+  const qs = new URLSearchParams({ meal_type: mealType, limit: String(limit) })
+  return request<NutritionEntry[]>('GET', `/suggestions/?${qs}`)
+}

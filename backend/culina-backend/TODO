@@ -26,19 +26,22 @@ Improvements
 
 - Current colour scheme and layout is great, just need a better font. It's pushing too much brutalist. [Done]
 - Back and forth buttons to go back and forth. Eager load in previous 2 days. [Done]
-- We need to speed up the thinking of the AI.
-- [Backend] Introduce suggestions for "Add Item". Right now, it's just empty. based on top items first, or maybe what they ate yesterday or same time last week and recommender system later. It should probably be conditioned on `meal_type`. Create service layer / interchangable extensbility for this. What are the best ways here? What ML techniques work? [Frontend] Then update frontend for this to autopopulate list when they click add item.
+- We need to speed up the thinking of the AI. [Done] no good soln, done for now. maybe better or cheaper models later.
+- [Backend] Introduce suggestions for "Add Item". Right now, it's just empty. based on top items first, or maybe what they ate yesterday or same time last week and recommender system later. It should probably be conditioned on `meal_type`. Create service layer / interchangable extensbility for this. What are the best ways here? What ML techniques work? [Frontend] Then update frontend for this to autopopulate list when they click add item. [Done]
 - When showing irregular quantities, we just have the amount x whatever the serving size is. For UX, if these are weight items or ml items, they should be shown in those figures. [Done]
 - On the main screen, highlight the + ADD ITEM depending on the time of day. [Done]
 - Remove 'thinking' and make it something else. [Done]
 - Reduce TTL to 60 seconds, and increase max concurrent to 5. [Done]
 - Summary statistics for week / fortnight / month/ year, but these need to be quick, so maybe when user logins we also recalculate this I don't know what's the quickest. Precomputed? Or is it already indexed so its really quick? i'D probably also want graphs, produce statistics etc with this.
+- Info button needs to be shown.
 - On the UI, we need to allow image search and probably need some sort of S3 bucket at htat point.
 - 429 a user if they make more than X amount of calls a day. Might have to track this in redis as well. Want to avoid 3rd party observability.
+- Move all our cached stuff to Redis, there's heaps now, inc. conversations, suggestions and somethigng else.
 
 Pre-alpha go live
 
-- Logs
+- Logs / emitting logs
 - Security audit
 - Code quality audit
+- Tests
 - Write updated docs

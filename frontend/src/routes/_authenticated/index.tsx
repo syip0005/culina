@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth } from '../../auth.tsx'
-import { getDailySummary, listMeals, getEntry, updateSettings } from '../../api.ts'
+import { getDailySummary, listMeals, getEntry, updateSettings, getSuggestions } from '../../api.ts'
 import { dateRange, todayDateStr, shiftDate, formatDateLabel } from '../../utils/date.ts'
 import { MealSection } from '../../components/MealSection.tsx'
 import { AddItemPanel } from '../../components/AddItemPanel.tsx'
@@ -43,6 +43,9 @@ function HomePage() {
   })
   const [entries, setEntries] = useState<Map<string, NutritionEntry>>(new Map())
   const [addingFor, setAddingFor] = useState<MealType | null>(null)
+  const [suggestionsByType, setSuggestionsByType] = useState<Record<MealType, NutritionEntry[]>>({
+    breakfast: [], lunch: [], dinner: [], snacks: [],
+  })
   const [loading, setLoading] = useState(true)
   const [sliding, setSliding] = useState<'left' | 'right' | null>(null)
 
@@ -132,6 +135,15 @@ function HomePage() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // Eager-load suggestions for all meal types once on mount
+  useEffect(() => {
+    Promise.all(MEAL_TYPES.map((mt) => getSuggestions(mt))).then(
+      ([breakfast, lunch, dinner, snacks]) => {
+        setSuggestionsByType({ breakfast, lunch, dinner, snacks })
+      },
+    )
+  }, [])
 
   const navigate = useCallback((direction: -1 | 1) => {
     if (addingFor) return // don't navigate while adding items
@@ -357,6 +369,7 @@ function HomePage() {
         <AddItemPanel
           mealType={addingFor}
           meal={mealsByType[addingFor]}
+          suggestions={suggestionsByType[addingFor] ?? []}
           onClose={() => setAddingFor(null)}
           onItemAdded={() => loadData()}
           onOptimisticAdd={(entry, quantity) => handleOptimisticAdd(addingFor, entry, quantity)}

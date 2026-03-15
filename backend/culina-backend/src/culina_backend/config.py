@@ -32,6 +32,8 @@ class GeneralSettings(BaseSettings):
 
     KEYWORD_SIMILARITY_THRESHOLD: float = 0.3
     SEMANTIC_DISTANCE_THRESHOLD: float = 0.4
+    SUGGESTION_FREQUENCY_CACHE_TTL_SECONDS: int = 3600
+    SUGGESTION_POPULAR_CACHE_TTL_SECONDS: int = 3600
 
     @classmethod
     def settings_customise_sources(cls, settings_cls, **kwargs):

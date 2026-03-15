@@ -2,13 +2,17 @@
 
 from culina_backend.ai.conversation_store import InMemoryConversationStore
 from culina_backend.ai.nutrition_lookup import NutritionLookup
-from culina_backend.config import ai_settings, secrets
+from culina_backend.config import ai_settings, general_settings, secrets
 from culina_backend.database.base import async_session
 from culina_backend.service.embedding import EmbeddingService
 from culina_backend.service.lookup import LookupService
 from culina_backend.service.meal import MealService
 from culina_backend.service.nutrition_entry import NutritionEntryService
 from culina_backend.service.summary import SummaryService
+from culina_backend.service.suggestion.frequency import FrequencySuggestionStrategy
+from culina_backend.service.suggestion.popular import PopularSuggestionStrategy
+from culina_backend.service.suggestion.random import RandomSuggestionStrategy
+from culina_backend.service.suggestion.service import SuggestionService
 from culina_backend.service.user import UserService
 
 embedding_service = EmbeddingService(
@@ -33,11 +37,25 @@ lookup_service = LookupService(
     conversation_store=InMemoryConversationStore(ttl_seconds=60),
 )
 
+suggestion_service = SuggestionService(
+    session_factory=async_session,
+    strategies=[
+        FrequencySuggestionStrategy(
+            cache_ttl=general_settings.SUGGESTION_FREQUENCY_CACHE_TTL_SECONDS,
+        ),
+        PopularSuggestionStrategy(
+            cache_ttl=general_settings.SUGGESTION_POPULAR_CACHE_TTL_SECONDS,
+        ),
+        RandomSuggestionStrategy(),
+    ],
+)
+
 __all__ = [
     "embedding_service",
     "lookup_service",
     "meal_service",
     "nutrition_entry_service",
     "summary_service",
+    "suggestion_service",
     "user_service",
 ]

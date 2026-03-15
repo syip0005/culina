@@ -10,6 +10,7 @@ from culina_backend.service.lookup import LookupService
 from culina_backend.service.meal import MealService
 from culina_backend.service.nutrition_entry import NutritionEntryService
 from culina_backend.service.summary import SummaryService
+from culina_backend.service.suggestion.service import SuggestionService
 from culina_backend.service.user import UserService
 
 
@@ -41,3 +42,9 @@ def get_lookup_service() -> LookupService:
     from culina_backend.service import lookup_service
 
     return lookup_service
+
+
+def get_suggestion_service() -> SuggestionService:
+    from culina_backend.service import suggestion_service
+
+    return suggestion_service

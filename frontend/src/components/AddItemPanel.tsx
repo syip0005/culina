@@ -9,6 +9,7 @@ import type { Meal, MealType, NutritionEntry, ServingUnit } from '../types.ts'
 interface Props {
   mealType: MealType
   meal: Meal | null
+  suggestions?: NutritionEntry[]
   onClose: () => void
   onItemAdded: () => void
   onOptimisticAdd?: (entry: NutritionEntry, quantity: number) => void
@@ -28,7 +29,7 @@ function servingLabel(amount: number, unit: ServingUnit, description: string | n
   return `${amount} ${unit}${amount !== 1 ? 's' : ''}`
 }
 
-export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded, onOptimisticAdd }: Props) {
+export function AddItemPanel({ mealType, meal: initialMeal, suggestions = [], onClose, onItemAdded, onOptimisticAdd }: Props) {
   const { user } = useAuth()
   const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
   const [query, setQuery] = useState('')
@@ -155,7 +156,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
         <div className="overlay-body">
           {searching && results.length === 0 && <div className="text-muted text-sm">Searching...</div>}
 
-          {results.map((entry) => {
+          {(debouncedQuery.trim() ? results : suggestions).map((entry) => {
             const isAdded = addedIds.has(entry.id)
             const isAddingThis = adding?.entry.id === entry.id
             const scalable = isScalableUnit(entry.serving_unit)
