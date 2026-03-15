@@ -27,7 +27,7 @@ Improvements
 - Current colour scheme and layout is great, just need a better font. It's pushing too much brutalist. [Done]
 - Back and forth buttons to go back and forth. Eager load in previous 2 days. [Done]
 - We need to speed up the thinking of the AI.
-- Introduce suggestions for "Add Item", based on top items first, or maybe what they ate yesterday or same time last week and recommender system later. Create service layer / interchangable extensbility for this. What are the best ways here? What ML techniques work?
+- [Backend] Introduce suggestions for "Add Item". Right now, it's just empty. based on top items first, or maybe what they ate yesterday or same time last week and recommender system later. It should probably be conditioned on `meal_type`. Create service layer / interchangable extensbility for this. What are the best ways here? What ML techniques work? [Frontend] Then update frontend for this to autopopulate list when they click add item.
 - When showing irregular quantities, we just have the amount x whatever the serving size is. For UX, if these are weight items or ml items, they should be shown in those figures. [Done]
 - On the main screen, highlight the + ADD ITEM depending on the time of day. [Done]
 - Remove 'thinking' and make it something else. [Done]
