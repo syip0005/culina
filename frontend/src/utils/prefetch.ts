@@ -34,6 +34,13 @@ export function invalidate(key: string) {
   cache.delete(key)
 }
 
+/** Invalidate all cache keys matching a prefix (e.g. "stats:" clears all period stats). */
+export function invalidatePrefix(prefix: string) {
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) cache.delete(key)
+  }
+}
+
 /** Invalidate and immediately re-prefetch (fire-and-forget). */
 export function refetch<T>(key: string, fn: () => Promise<T>): void {
   cache.delete(key)

@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth } from '../../auth.tsx'
-import { getDailySummary, listMeals, getEntry, updateSettings, getSuggestions, getPeriodStats } from '../../api.ts'
-import { refetch } from '../../utils/prefetch.ts'
+import { getDailySummary, listMeals, getEntry, updateSettings, getSuggestions } from '../../api.ts'
+import { invalidatePrefix } from '../../utils/prefetch.ts'
 import { dateRange, todayDateStr, shiftDate, formatDateLabel } from '../../utils/date.ts'
 import { MealSection } from '../../components/MealSection.tsx'
 import { AddItemPanel } from '../../components/AddItemPanel.tsx'
@@ -19,6 +19,7 @@ const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snacks']
 const dayCache = new Map<string, DayData>()
 const suggestionsCache: { data: Record<MealType, NutritionEntry[]> | null; ts: number } = { data: null, ts: 0 }
 const SUGGESTIONS_MAX_AGE = 5 * 60_000 // 5 minutes
+const entriesCache = new Map<string, NutritionEntry>()
 
 function currentMealType(tz: string): MealType {
   const hour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false }).format(new Date()), 10)
@@ -48,7 +49,7 @@ function HomePage() {
   const [mealsByType, setMealsByType] = useState<Record<MealType, Meal | null>>(
     cachedToday?.mealsByType ?? { breakfast: null, lunch: null, dinner: null, snacks: null }
   )
-  const [entries, setEntries] = useState<Map<string, NutritionEntry>>(new Map())
+  const [entries, setEntries] = useState<Map<string, NutritionEntry>>(() => new Map(entriesCache))
   const [addingFor, setAddingFor] = useState<MealType | null>(null)
   const [suggestionsByType, setSuggestionsByType] = useState<Record<MealType, NutritionEntry[]>>(
     suggestionsCache.data ?? { breakfast: [], lunch: [], dinner: [], snacks: [] }
@@ -87,6 +88,9 @@ function HomePage() {
       const toFetch = [...entryIds].filter((id) => !prev.has(id))
       if (toFetch.length === 0) return prev
       Promise.all(toFetch.map((id) => getEntry(id))).then((fetched) => {
+        for (const entry of fetched) {
+          entriesCache.set(entry.id, entry)
+        }
         setEntries((current) => {
           const merged = new Map(current)
           for (const entry of fetched) {
@@ -212,14 +216,14 @@ function HomePage() {
     return () => window.removeEventListener('keydown', handler)
   }, [navigate, addingFor])
 
-  // Background-refetch stats so they're fresh when navigating to /stats
-  const refetchStats = useCallback(() => {
-    refetch('stats:week', () => getPeriodStats('week'))
+  // Invalidate all cached stats so they're re-fetched when navigating to /stats
+  const invalidateStats = useCallback(() => {
+    invalidatePrefix('stats:')
   }, [])
 
   const handleOptimisticDelete = useCallback((macros: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => {
     dayCache.delete(currentDate)
-    refetchStats()
+    invalidateStats()
     setSummary((prev) => {
       if (!prev) return prev
       return {
@@ -238,11 +242,11 @@ function HomePage() {
         },
       }
     })
-  }, [currentDate, refetchStats])
+  }, [currentDate, invalidateStats])
 
   const handleOptimisticAdd = useCallback((mealType: MealType, entry: NutritionEntry, quantity: number) => {
     dayCache.delete(currentDate)
-    refetchStats()
+    invalidateStats()
     setSummary((prev) => {
       if (!prev) return prev
       return {
@@ -262,6 +266,7 @@ function HomePage() {
       }
     })
 
+    entriesCache.set(entry.id, entry)
     setEntries((prev) => {
       if (prev.has(entry.id)) return prev
       const next = new Map(prev)
@@ -297,7 +302,7 @@ function HomePage() {
         },
       }
     })
-  }, [currentDate, refetchStats])
+  }, [currentDate, invalidateStats])
 
   if (loading) return <div className="container">LOADING...</div>
 
