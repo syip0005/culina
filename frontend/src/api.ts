@@ -102,6 +102,21 @@ export function getEntry(id: string) {
   return request<NutritionEntry>('GET', `/nutrition-entries/${id}`)
 }
 
+export function updateNutritionEntry(entryId: string, data: Partial<{
+  food_item: string
+  brand: string
+  serving_amount: number
+  serving_unit: string
+  serving_description: string | null
+  energy_kj: number
+  protein_g: number
+  fat_g: number
+  carbs_g: number
+  notes: string | null
+}>) {
+  return request<NutritionEntry>('PATCH', `/nutrition-entries/${entryId}`, data)
+}
+
 export function deleteNutritionEntry(id: string) {
   return request<void>('DELETE', `/nutrition-entries/${id}`)
 }

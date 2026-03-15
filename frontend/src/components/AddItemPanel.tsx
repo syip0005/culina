@@ -5,6 +5,7 @@ import { searchEntries, addMealItem, createMeal, deleteNutritionEntry } from '..
 import { dateMidpointISO } from '../utils/date.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { LookupView } from './LookupView.tsx'
+import { EditEntryPanel } from './EditEntryPanel.tsx'
 import type { Meal, MealType, NutritionEntry, ServingUnit } from '../types.ts'
 
 interface Props {
@@ -46,6 +47,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [expandedInfoId, setExpandedInfoId] = useState<string | null>(null)
+  const [editingEntry, setEditingEntry] = useState<NutritionEntry | null>(null)
   const popupRef = useRef<HTMLDivElement>(null)
 
   // Close info popup on click outside
@@ -200,6 +202,20 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
                       className="btn-info"
                       onClick={(e) => {
                         e.stopPropagation()
+                        setExpandedInfoId(null)
+                        setEditingEntry(entry)
+                      }}
+                      title="Edit entry"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M11.5 1.5l3 3L5 14H2v-3z" />
+                        <line x1="9.5" y1="3.5" x2="12.5" y2="6.5" />
+                      </svg>
+                    </button>
+                    <button
+                      className="btn-info"
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setExpandedInfoId(expandedInfoId === entry.id ? null : entry.id)
                       }}
                       title="Entry details"
@@ -308,6 +324,18 @@ export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone
           onMealCreated={(m) => setMeal(m)}
           onItemAdded={onItemAdded}
           onBack={() => setShowLookup(false)}
+        />
+      )}
+
+      {editingEntry && (
+        <EditEntryPanel
+          entry={editingEntry}
+          energyUnit={eUnit}
+          onSave={(updated) => {
+            setResults((prev) => prev.map((e) => e.id === editingEntry.id ? updated : e))
+            setEditingEntry(null)
+          }}
+          onClose={() => setEditingEntry(null)}
         />
       )}
     </div>

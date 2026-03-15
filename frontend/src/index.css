@@ -904,6 +904,27 @@ label {
   flex-shrink: 0;
 }
 
+/* Edit entry serving row */
+.edit-serving-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+.edit-serving-row .form-group { margin-bottom: 0; }
+.edit-serving-row .form-group:first-child { width: 80px; flex-shrink: 0; }
+.edit-serving-row .form-group:nth-child(2) { width: 80px; flex-shrink: 0; }
+.edit-serving-row .form-group:last-child { flex: 1; }
+
+/* Textarea base style */
+textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: var(--border);
+  font-family: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
 /* Added state */
 .added {
   opacity: 0.5;
