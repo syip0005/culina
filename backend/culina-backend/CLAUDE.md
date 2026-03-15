@@ -63,6 +63,8 @@
 - `UserService` — CRUD, soft delete (deleted_at), filtering, restores
 - `NutritionEntryService` — list, text search (trigram), vector search (embedding), create, override
 - `EmbeddingService` — wraps pydantic-ai Embedder via OpenRouter
+- `SuggestionService` — orchestrates ordered list of `SuggestionStrategy` implementations, deduplicates, hydrates IDs via `nutrition_entry_from_orm`
+- `service/suggestion/` — strategy pattern package: `FrequencySuggestionStrategy` (user's top items per meal_type), `PopularSuggestionStrategy` (global popularity), `RandomSuggestionStrategy` (final fallback)
 - `converters.py` — ORM ↔ Pydantic domain model conversion (keep domain models free of SQLAlchemy imports)
 - `errors.py` — custom exceptions: NotFoundError, ForbiddenError, DuplicateError, EmbeddingError
 
@@ -73,6 +75,9 @@
 - EmbeddingService is mocked with deterministic hash-based embeddings
 
 ## Key Conventions
+- New services: create singleton in `service/__init__.py`, add getter in `route/dependencies.py` (lazy import), register router in `app.py`
+- Strategy pattern for extensible behavior: implement protocol, add instance to strategies list in `service/__init__.py`
+- Cache TTL settings go in `config.py` `GeneralSettings`, wired to strategy constructors in `service/__init__.py`
 - All DB operations are async (AsyncSession)
 - SYSTEM_USER_ID (UUID zero) = shared AFCD base data; user overrides are full copies with `base_entry_id`
 - Visibility rule: user sees own entries + system entries, minus entries they've overridden

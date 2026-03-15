@@ -47,6 +47,7 @@
 
 ### Add Item Flow
 - `AddItemPanel` — search overlay with debounced keyword (5) + semantic (8) parallel search, deduped to 8 max results
+- Accepts `suggestions` prop — displayed when search query is empty, replaced by search results when user types
 - "Find New Items" opens `LookupView` as second overlay on top
 - Lazy meal creation: meal is created on first item add if it doesn't exist yet
 
@@ -85,4 +86,5 @@
 - `POST /nutrition-entries/` — create entry
 - `GET /nutrition-entries/{id}` — get single entry
 - `POST /lookup/` — AI nutrition lookup (multi-turn)
+- `GET /suggestions/?meal_type=&limit=` — food item suggestions (eager-loaded on mount for all 4 meal types)
 - `GET /summary/daily?date=` — daily macro summary
