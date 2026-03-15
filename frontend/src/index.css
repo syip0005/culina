@@ -416,6 +416,10 @@ label {
   z-index: 200;
 }
 
+.overlay.third {
+  z-index: 300;
+}
+
 .overlay-inner {
   max-width: 480px;
   width: 100%;

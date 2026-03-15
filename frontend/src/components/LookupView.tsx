@@ -3,6 +3,7 @@ import { useAuth } from '../auth.tsx'
 import { lookup, createNutritionEntry, addMealItem, createMeal } from '../api.ts'
 import { dateMidpointISO } from '../utils/date.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
+import { EditEntryPanel } from './EditEntryPanel.tsx'
 import { isSearchNutritionInfo } from '../types.ts'
 import type {
   Meal,
@@ -126,6 +127,7 @@ export function LookupView({ initialQuery, mealType, mealId, targetDate, timezon
   const [currentMealId, setCurrentMealId] = useState<string | null>(mealId)
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set())
   const [addingQuantity, setAddingQuantity] = useState<{ item: SearchNutritionInfo; quantity: string } | null>(null)
+  const [editingItem, setEditingItem] = useState<{ msgIndex: number; itemIndex: number; item: SearchNutritionInfo } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const sentInitial = useRef(false)
   const thinkingPhrase = useThinkingPhrase(loading)
@@ -292,6 +294,18 @@ export function LookupView({ initialQuery, mealType, mealId, targetDate, timezon
                               carbsG={info.carbs_g}
                               energyUnit={eUnit}
                             />
+                            <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.4rem', alignItems: 'center' }}>
+                              <button
+                                className="btn-info"
+                                onClick={() => setEditingItem({ msgIndex: i, itemIndex: j, item: info })}
+                                title="Edit item"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <path d="M11.5 1.5l3 3L5 14H2v-3z" />
+                                  <line x1="9.5" y1="3.5" x2="12.5" y2="6.5" />
+                                </svg>
+                              </button>
+                            </div>
                             {isAdded ? (
                               <div className="text-muted text-sm mt-1">Added</div>
                             ) : isAddingThis ? (
@@ -371,6 +385,26 @@ export function LookupView({ initialQuery, mealType, mealId, targetDate, timezon
           </form>
         </div>
       </div>
+      {editingItem && (
+        <EditEntryPanel
+          item={editingItem.item}
+          className="overlay third"
+          energyUnit={eUnit}
+          onSave={(updated) => {
+            setMessages((prev) => prev.map((msg, mi) => {
+              if (mi !== editingItem.msgIndex || msg.response?.kind !== 'result') return msg
+              const newItems = [...msg.response.result.items]
+              newItems[editingItem.itemIndex] = updated
+              return {
+                ...msg,
+                response: { ...msg.response, result: { ...msg.response.result, items: newItems } }
+              }
+            }))
+            setEditingItem(null)
+          }}
+          onClose={() => setEditingItem(null)}
+        />
+      )}
     </div>
   )
 }

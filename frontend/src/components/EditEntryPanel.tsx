@@ -1,63 +1,99 @@
 import { useState } from 'react'
 import { updateNutritionEntry } from '../api.ts'
-import type { NutritionEntry, ServingUnit } from '../types.ts'
+import type { NutritionEntry, SearchNutritionInfo, ServingUnit } from '../types.ts'
 
-interface Props {
-  entry: NutritionEntry
-  energyUnit?: string
-  onSave: (updated: NutritionEntry) => void
-  onClose: () => void
+interface EditableFields {
+  food_item: string
+  brand: string
+  serving_amount: number
+  serving_unit: ServingUnit
+  serving_description: string | null
+  energy_kj: number
+  protein_g: number
+  fat_g: number
+  carbs_g: number
+  notes: string | null
 }
 
-export function EditEntryPanel({ entry, onSave, onClose }: Props) {
-  const [foodItem, setFoodItem] = useState(entry.food_item)
-  const [brand, setBrand] = useState(entry.brand)
-  const [servingAmount, setServingAmount] = useState(String(entry.serving_amount))
-  const [servingUnit, setServingUnit] = useState<ServingUnit>(entry.serving_unit)
-  const [servingDescription, setServingDescription] = useState(entry.serving_description ?? '')
-  const [energyKj, setEnergyKj] = useState(String(entry.energy_kj))
-  const [proteinG, setProteinG] = useState(String(entry.protein_g))
-  const [fatG, setFatG] = useState(String(entry.fat_g))
-  const [carbsG, setCarbsG] = useState(String(entry.carbs_g))
-  const [notes, setNotes] = useState(entry.notes ?? '')
+type Props = {
+  className?: string
+  energyUnit?: string
+  onClose: () => void
+} & (
+  | { entry: NutritionEntry; item?: never; onSave: (updated: NutritionEntry) => void }
+  | { item: SearchNutritionInfo; entry?: never; onSave: (updated: SearchNutritionInfo) => void }
+)
+
+export function EditEntryPanel({ entry, item, className, onSave, onClose }: Props) {
+  const source: EditableFields = entry ?? item!
+  const [foodItem, setFoodItem] = useState(source.food_item)
+  const [brand, setBrand] = useState(source.brand)
+  const [servingAmount, setServingAmount] = useState(String(source.serving_amount))
+  const [servingUnit, setServingUnit] = useState<ServingUnit>(source.serving_unit)
+  const [servingDescription, setServingDescription] = useState(source.serving_description ?? '')
+  const [energyKj, setEnergyKj] = useState(String(source.energy_kj))
+  const [proteinG, setProteinG] = useState(String(source.protein_g))
+  const [fatG, setFatG] = useState(String(source.fat_g))
+  const [carbsG, setCarbsG] = useState(String(source.carbs_g))
+  const [notes, setNotes] = useState(source.notes ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSave = async () => {
+    if (!foodItem.trim()) {
+      setError('Name is required')
+      return
+    }
+
+    if (item) {
+      // Local mode: build updated SearchNutritionInfo, no API call
+      const updated: SearchNutritionInfo = {
+        ...item,
+        food_item: foodItem.trim(),
+        brand,
+        serving_amount: parseFloat(servingAmount) || item.serving_amount,
+        serving_unit: servingUnit,
+        serving_description: servingDescription || null,
+        energy_kj: parseFloat(energyKj) || 0,
+        protein_g: parseFloat(proteinG) || 0,
+        fat_g: parseFloat(fatG) || 0,
+        carbs_g: parseFloat(carbsG) || 0,
+        notes: notes || null,
+      };
+      (onSave as (updated: SearchNutritionInfo) => void)(updated)
+      return
+    }
+
+    // Persisted mode: build diff, PATCH via API
     const changes: Record<string, unknown> = {}
 
-    if (foodItem.trim() !== entry.food_item) changes.food_item = foodItem.trim()
-    if (brand !== entry.brand) changes.brand = brand
+    if (foodItem.trim() !== source.food_item) changes.food_item = foodItem.trim()
+    if (brand !== source.brand) changes.brand = brand
     const sa = parseFloat(servingAmount)
-    if (!isNaN(sa) && sa !== entry.serving_amount) changes.serving_amount = sa
-    if (servingUnit !== entry.serving_unit) changes.serving_unit = servingUnit
+    if (!isNaN(sa) && sa !== source.serving_amount) changes.serving_amount = sa
+    if (servingUnit !== source.serving_unit) changes.serving_unit = servingUnit
     const sd = servingDescription || null
-    if (sd !== entry.serving_description) changes.serving_description = sd
+    if (sd !== source.serving_description) changes.serving_description = sd
     const ek = parseFloat(energyKj)
-    if (!isNaN(ek) && ek !== entry.energy_kj) changes.energy_kj = ek
+    if (!isNaN(ek) && ek !== source.energy_kj) changes.energy_kj = ek
     const pg = parseFloat(proteinG)
-    if (!isNaN(pg) && pg !== entry.protein_g) changes.protein_g = pg
+    if (!isNaN(pg) && pg !== source.protein_g) changes.protein_g = pg
     const fg = parseFloat(fatG)
-    if (!isNaN(fg) && fg !== entry.fat_g) changes.fat_g = fg
+    if (!isNaN(fg) && fg !== source.fat_g) changes.fat_g = fg
     const cg = parseFloat(carbsG)
-    if (!isNaN(cg) && cg !== entry.carbs_g) changes.carbs_g = cg
+    if (!isNaN(cg) && cg !== source.carbs_g) changes.carbs_g = cg
     const n = notes || null
-    if (n !== entry.notes) changes.notes = n
+    if (n !== source.notes) changes.notes = n
 
     if (Object.keys(changes).length === 0) {
       onClose()
       return
     }
 
-    if (!foodItem.trim()) {
-      setError('Name is required')
-      return
-    }
-
     setSaving(true)
     setError(null)
     try {
-      const updated = await updateNutritionEntry(entry.id, changes)
+      const updated = await updateNutritionEntry(entry!.id, changes)
       onSave(updated)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
@@ -67,7 +103,7 @@ export function EditEntryPanel({ entry, onSave, onClose }: Props) {
   }
 
   return (
-    <div className="overlay second">
+    <div className={className ?? "overlay second"}>
       <div className="overlay-inner">
         <div className="overlay-header">
           <h2>Edit Entry</h2>
