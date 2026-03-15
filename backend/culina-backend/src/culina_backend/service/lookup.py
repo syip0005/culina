@@ -18,7 +18,10 @@ from culina_backend.service.errors import (
     ConversationLimitError,
     ForbiddenError,
     NotFoundError,
+    PayloadTooLargeError,
+    RateLimitError,
 )
+from culina_backend.service.rate_limit import RateLimiter
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,10 +38,12 @@ class LookupService:
         nutrition_lookup: NutritionLookup,
         conversation_store: ConversationStore,
         max_conversations_per_user: int = 5,
+        rate_limiter: RateLimiter | None = None,
     ) -> None:
         self._lookup = nutrition_lookup
         self._store = conversation_store
         self._max_conversations = max_conversations_per_user
+        self._rate_limiter = rate_limiter
 
     async def lookup(
         self,
@@ -63,6 +68,9 @@ class LookupService:
             has_conversation=conversation_id is not None,
             has_image=image_base64 is not None,
         )
+
+        if self._rate_limiter and not self._rate_limiter.check(user_id):
+            raise RateLimitError("Too many lookup requests — please slow down")
 
         # Resolve or create conversation
         if conversation_id is not None:
@@ -93,6 +101,9 @@ class LookupService:
         return LookupResult(conversation_id=conversation_id, output=response.output)
 
 
+MAX_IMAGE_BASE64_LENGTH = 10 * 1024 * 1024  # ~7.5 MB decoded
+
+
 def _build_prompt(
     text: str | None,
     image_base64: str | None,
@@ -100,6 +111,8 @@ def _build_prompt(
 ) -> str | list[UserContent]:
     """Build the user prompt from text and/or image inputs."""
     if image_base64 is not None:
+        if len(image_base64) > MAX_IMAGE_BASE64_LENGTH:
+            raise PayloadTooLargeError("Image exceeds maximum size of 10 MB")
         parts: list[UserContent] = []
         if text:
             parts.append(text)

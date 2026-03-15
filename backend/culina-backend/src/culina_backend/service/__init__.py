@@ -7,6 +7,7 @@ from culina_backend.database.base import async_session
 from culina_backend.service.embedding import EmbeddingService
 from culina_backend.service.lookup import LookupService
 from culina_backend.service.meal import MealService
+from culina_backend.service.rate_limit import RateLimiter
 from culina_backend.service.nutrition_entry import NutritionEntryService
 from culina_backend.service.summary import SummaryService
 from culina_backend.service.suggestion.frequency import FrequencySuggestionStrategy
@@ -32,9 +33,12 @@ meal_service = MealService(session_factory=async_session)
 
 summary_service = SummaryService(session_factory=async_session)
 
+lookup_rate_limiter = RateLimiter(max_requests=10, window_seconds=60)
+
 lookup_service = LookupService(
     nutrition_lookup=NutritionLookup(),
     conversation_store=InMemoryConversationStore(ttl_seconds=60),
+    rate_limiter=lookup_rate_limiter,
 )
 
 suggestion_service = SuggestionService(
