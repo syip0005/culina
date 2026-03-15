@@ -39,6 +39,13 @@ export function shiftDate(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
+/** Return a UTC ISO timestamp representing noon on a YYYY-MM-DD in the given timezone. */
+export function dateMidpointISO(dateStr: string, timezone: string): string {
+  const noonAsUTC = new Date(`${dateStr}T12:00:00Z`)
+  const offset = tzOffsetMs(timezone, noonAsUTC)
+  return new Date(noonAsUTC.getTime() - offset).toISOString()
+}
+
 /** Format YYYY-MM-DD for display: "Today", "Yesterday", or "Mon 14 Mar" */
 export function formatDateLabel(dateStr: string, todayStr: string): string {
   if (dateStr === todayStr) return 'Today'

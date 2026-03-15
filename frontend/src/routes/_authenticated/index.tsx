@@ -389,6 +389,8 @@ function HomePage() {
         <AddItemPanel
           mealType={addingFor}
           meal={mealsByType[addingFor]}
+          targetDate={currentDate}
+          timezone={tz}
           suggestions={suggestionsByType[addingFor] ?? []}
           onClose={() => setAddingFor(null)}
           onItemAdded={() => loadData()}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../auth.tsx'
 import { useDebounce } from '../utils/debounce.ts'
 import { searchEntries, addMealItem, createMeal, deleteNutritionEntry } from '../api.ts'
+import { dateMidpointISO } from '../utils/date.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { LookupView } from './LookupView.tsx'
 import type { Meal, MealType, NutritionEntry, ServingUnit } from '../types.ts'
@@ -9,6 +10,9 @@ import type { Meal, MealType, NutritionEntry, ServingUnit } from '../types.ts'
 interface Props {
   mealType: MealType
   meal: Meal | null
+  /** YYYY-MM-DD + timezone so we create meals on the correct day */
+  targetDate: string
+  timezone: string
   suggestions?: NutritionEntry[]
   onClose: () => void
   onItemAdded: () => void
@@ -29,7 +33,7 @@ function servingLabel(amount: number, unit: ServingUnit, description: string | n
   return `${amount} ${unit}${amount !== 1 ? 's' : ''}`
 }
 
-export function AddItemPanel({ mealType, meal: initialMeal, suggestions = [], onClose, onItemAdded, onOptimisticAdd }: Props) {
+export function AddItemPanel({ mealType, meal: initialMeal, targetDate, timezone, suggestions = [], onClose, onItemAdded, onOptimisticAdd }: Props) {
   const { user } = useAuth()
   const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
   const [query, setQuery] = useState('')
@@ -93,7 +97,7 @@ export function AddItemPanel({ mealType, meal: initialMeal, suggestions = [], on
     if (meal) return meal
     const created = await createMeal({
       meal_type: mealType,
-      eaten_at: new Date().toISOString(),
+      eaten_at: dateMidpointISO(targetDate, timezone),
     })
     setMeal(created)
     return created
@@ -299,6 +303,8 @@ export function AddItemPanel({ mealType, meal: initialMeal, suggestions = [], on
           initialQuery={query}
           mealType={mealType}
           mealId={meal?.id ?? null}
+          targetDate={targetDate}
+          timezone={timezone}
           onMealCreated={(m) => setMeal(m)}
           onItemAdded={onItemAdded}
           onBack={() => setShowLookup(false)}

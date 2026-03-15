@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../auth.tsx'
 import { lookup, createNutritionEntry, addMealItem, createMeal } from '../api.ts'
+import { dateMidpointISO } from '../utils/date.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { isSearchNutritionInfo } from '../types.ts'
 import type {
@@ -102,6 +103,8 @@ interface Props {
   initialQuery: string
   mealType: MealType
   mealId: string | null
+  targetDate: string
+  timezone: string
   onMealCreated: (meal: Meal) => void
   onItemAdded: () => void
   onBack: () => void
@@ -113,7 +116,7 @@ interface Message {
   response?: LookupResponse
 }
 
-export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onItemAdded, onBack }: Props) {
+export function LookupView({ initialQuery, mealType, mealId, targetDate, timezone, onMealCreated, onItemAdded, onBack }: Props) {
   const { user } = useAuth()
   const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
   const [messages, setMessages] = useState<Message[]>([])
@@ -173,7 +176,7 @@ export function LookupView({ initialQuery, mealType, mealId, onMealCreated, onIt
     if (currentMealId) return currentMealId
     const meal = await createMeal({
       meal_type: mealType,
-      eaten_at: new Date().toISOString(),
+      eaten_at: dateMidpointISO(targetDate, timezone),
     })
     setCurrentMealId(meal.id)
     onMealCreated(meal)
