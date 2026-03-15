@@ -31,7 +31,6 @@ function LoginPage() {
       <h1 className="logo">CULINA<span className="alpha-tag">ALPHA</span></h1>
       <div className="auth-buttons">
         <button onClick={() => signIn('google')}>SIGN IN WITH GOOGLE</button>
-        <button onClick={() => signIn('github')}>SIGN IN WITH GITHUB</button>
       </div>
     </div>
   )
