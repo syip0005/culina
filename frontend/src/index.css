@@ -77,6 +77,17 @@ button.secondary:hover {
   color: var(--color-bg);
 }
 
+button.highlight-add {
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+button.highlight-add:hover {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
 input, select {
   width: 100%;
   padding: 0.5rem;

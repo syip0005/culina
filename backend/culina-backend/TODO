@@ -28,6 +28,8 @@ Improvements
 - We need to speed up the thinking of the AI.
 - Introduce suggestions for "Add Item", based on top items first, or maybe what they ate yesterday or same time last week and recommender system later. Create service layer / interchangable extensbility for this. What are the best ways here? What ML techniques work?
 - When showing irregular quantities, we just have the amount x whatever the serving size is. For UX, if these are weight items or ml items, they should be shown in those figures. [Done]
+- On the main screen, highlight the + ADD ITEM depending on the time of day.
+- Remove 'thinking' and make it something else. [Done]
 - Reduce TTL to 60 seconds, and increase max concurrent to 5. [Done]
 - Summary statistics for week / fortnight / month/ year, but these need to be quick, so maybe when user logins we also recalculate this I don't know what's the quickest. Precomputed? Or is it already indexed so its really quick? i'D probably also want graphs, produce statistics etc with this.
 - On the UI, we need to allow image search and probably need some sort of S3 bucket at htat point.

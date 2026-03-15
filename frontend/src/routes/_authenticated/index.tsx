@@ -14,6 +14,14 @@ export const Route = createFileRoute('/_authenticated/')({
 
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snacks']
 
+function currentMealType(tz: string): MealType {
+  const hour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false }).format(new Date()), 10)
+  if (hour >= 5 && hour < 10) return 'breakfast'
+  if (hour >= 10 && hour < 14) return 'lunch'
+  if (hour >= 14 && hour < 20) return 'dinner'
+  return 'snacks'
+}
+
 interface DayData {
   summary: DailySummaryResponse | null
   mealsByType: Record<MealType, Meal | null>
@@ -319,6 +327,7 @@ function HomePage() {
           meal={mealsByType[mt]}
           entries={entries}
           energyUnit={eUnit}
+          highlight={isToday && currentMealType(tz) === mt}
           onAddItem={() => setAddingFor(mt)}
           onRefresh={() => loadData()}
           onOptimisticDelete={handleOptimisticDelete}

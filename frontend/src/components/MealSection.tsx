@@ -9,6 +9,7 @@ interface Props {
   meal: Meal | null
   entries: Map<string, NutritionEntry>
   energyUnit?: string
+  highlight?: boolean
   onAddItem: () => void
   onRefresh: () => void
   onOptimisticDelete?: (macros: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => void
@@ -21,7 +22,7 @@ const LABELS: Record<MealType, string> = {
   snacks: 'SNACKS',
 }
 
-export function MealSection({ mealType, meal, entries, energyUnit = 'kj', onAddItem, onRefresh, onOptimisticDelete }: Props) {
+export function MealSection({ mealType, meal, entries, energyUnit = 'kj', highlight, onAddItem, onRefresh, onOptimisticDelete }: Props) {
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
   const items = (meal?.items ?? []).filter((item) => !removedIds.has(item.id))
 
@@ -95,7 +96,7 @@ export function MealSection({ mealType, meal, entries, energyUnit = 'kj', onAddI
       })}
 
       <div className="meal-section-footer">
-        <button className="secondary" onClick={onAddItem} style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}>
+        <button className={highlight ? 'secondary highlight-add' : 'secondary'} onClick={onAddItem} style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}>
           + ADD ITEM
         </button>
       </div>

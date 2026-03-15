@@ -7,5 +7,5 @@ export default defineConfig({
     TanStackRouterVite({ routesDirectory: './src/routes', autoCodeSplitting: true }),
     react(),
   ],
-  server: { port: 3000 },
+  server: { port: 3000, host: true },
 })
