@@ -296,19 +296,19 @@ function HomePage() {
       {summary && (
         <div className="summary-bar">
           <div className="summary-item">
-            <div className="value">{displayEnergy(summary.consumed.energy_kj, eUnit)}</div>
-            <div className="label">Energy {energyLabel(eUnit)}</div>
+            <div className="value">{displayEnergy(summary.remaining.energy_kj, eUnit)}</div>
+            <div className="label">Remaining {energyLabel(eUnit)}</div>
           </div>
           <div className="summary-item">
-            <div className="value">{Math.round(summary.consumed.protein_g)}</div>
+            <div className="value">{Math.round(summary.remaining.protein_g)}</div>
             <div className="label">Protein g</div>
           </div>
           <div className="summary-item">
-            <div className="value">{Math.round(summary.consumed.fat_g)}</div>
+            <div className="value">{Math.round(summary.remaining.fat_g)}</div>
             <div className="label">Fat g</div>
           </div>
           <div className="summary-item">
-            <div className="value">{Math.round(summary.consumed.carbs_g)}</div>
+            <div className="value">{Math.round(summary.remaining.carbs_g)}</div>
             <div className="label">Carbs g</div>
           </div>
         </div>
@@ -316,7 +316,7 @@ function HomePage() {
 
       {summary && (
         <div style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '1rem', textAlign: 'center' }}>
-          Remaining: {displayEnergy(summary.remaining.energy_kj, eUnit)} {energyLabel(eUnit)} | {Math.round(summary.remaining.protein_g)}p | {Math.round(summary.remaining.fat_g)}f | {Math.round(summary.remaining.carbs_g)}c
+          Consumed: {displayEnergy(summary.consumed.energy_kj, eUnit)} {energyLabel(eUnit)} | {Math.round(summary.consumed.protein_g)}p | {Math.round(summary.consumed.fat_g)}f | {Math.round(summary.consumed.carbs_g)}c
         </div>
       )}
 
