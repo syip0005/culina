@@ -1,5 +1,6 @@
 """SQLAlchemy async engine, session factory, and declarative base."""
 
+import ssl
 from datetime import datetime
 
 from sqlalchemy import MetaData, func
@@ -17,7 +18,14 @@ convention = {
     "pk": "pk_%(table_name)s",
 }
 
-engine = create_async_engine(secrets.DATABASE_URL, echo=False)
+_connect_args: dict = {}
+if secrets.DATABASE_SSL:
+    _ssl_ctx = ssl.create_default_context()
+    _connect_args["ssl"] = _ssl_ctx
+
+engine = create_async_engine(
+    secrets.DATABASE_URL, echo=False, connect_args=_connect_args
+)
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
