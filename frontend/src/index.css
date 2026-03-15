@@ -148,6 +148,11 @@ label {
   line-height: 1;
 }
 
+.logo .alpha-tag {
+  font-size: 0.3em;
+  vertical-align: 1.5em;
+}
+
 .auth-buttons {
   display: flex;
   flex-direction: column;
