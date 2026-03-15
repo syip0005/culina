@@ -244,6 +244,29 @@ function HomePage() {
     })
   }, [currentDate, invalidateStats])
 
+  const handleOptimisticUpdate = useCallback((delta: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => {
+    dayCache.delete(currentDate)
+    invalidateStats()
+    setSummary((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        consumed: {
+          energy_kj: prev.consumed.energy_kj + delta.energy_kj,
+          protein_g: prev.consumed.protein_g + delta.protein_g,
+          fat_g: prev.consumed.fat_g + delta.fat_g,
+          carbs_g: prev.consumed.carbs_g + delta.carbs_g,
+        },
+        remaining: {
+          energy_kj: prev.remaining.energy_kj - delta.energy_kj,
+          protein_g: prev.remaining.protein_g - delta.protein_g,
+          fat_g: prev.remaining.fat_g - delta.fat_g,
+          carbs_g: prev.remaining.carbs_g - delta.carbs_g,
+        },
+      }
+    })
+  }, [currentDate, invalidateStats])
+
   const handleOptimisticAdd = useCallback((mealType: MealType, entry: NutritionEntry, quantity: number) => {
     dayCache.delete(currentDate)
     invalidateStats()
@@ -387,6 +410,7 @@ function HomePage() {
           onAddItem={() => setAddingFor(mt)}
           onRefresh={() => loadData()}
           onOptimisticDelete={handleOptimisticDelete}
+          onOptimisticUpdate={handleOptimisticUpdate}
         />
       ))}
 

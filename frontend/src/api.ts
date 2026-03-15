@@ -3,6 +3,7 @@ import type {
   User,
   UserSettings,
   Meal,
+  MealItem,
   NutritionEntry,
   LookupResponse,
   DailySummaryResponse,
@@ -70,6 +71,10 @@ export function addMealItem(mealId: string, data: { nutrition_entry_id: string; 
 
 export function deleteMealItem(mealId: string, itemId: string) {
   return request<void>('DELETE', `/meals/${mealId}/items/${itemId}`)
+}
+
+export function updateMealItem(mealId: string, itemId: string, data: { quantity?: number; notes?: string }) {
+  return request<MealItem>('PATCH', `/meals/${mealId}/items/${itemId}`, data)
 }
 
 export function searchEntries(query: string, mode: 'keyword' | 'semantic', limit: number) {

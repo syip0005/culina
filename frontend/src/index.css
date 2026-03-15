@@ -336,15 +336,39 @@ label {
 }
 
 .meal-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid #ddd;
+  cursor: pointer;
 }
 
 .meal-item:last-child {
   border-bottom: none;
+}
+
+.meal-item-editing {
+  cursor: default;
+}
+
+.meal-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.meal-item-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+}
+
+.meal-item-edit label {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.meal-item-edit input {
+  width: 60px;
 }
 
 .meal-item-name {
