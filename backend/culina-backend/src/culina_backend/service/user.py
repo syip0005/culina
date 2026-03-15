@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from culina_backend.database.models import UserModel, UserSettings as UserSettingsORM
+from culina_backend.database.models import GoalChange, UserModel, UserSettings as UserSettingsORM
 from culina_backend.model.user import User, UserFilter, UserSettings
 from culina_backend.service.converters import (
     user_from_orm,
@@ -152,6 +152,24 @@ class UserService:
             for key, value in data.items():
                 if hasattr(settings, key) and key not in ("id", "user_id"):
                     setattr(settings, key, value)
+
+            # Record goal change if any target fields were updated
+            _target_fields = {
+                "daily_energy_target_kj",
+                "daily_protein_target_g",
+                "daily_fat_target_g",
+                "daily_carbs_target_g",
+            }
+            if _target_fields & data.keys():
+                session.add(
+                    GoalChange(
+                        user_id=user_id,
+                        daily_energy_target_kj=settings.daily_energy_target_kj,
+                        daily_protein_target_g=settings.daily_protein_target_g,
+                        daily_fat_target_g=settings.daily_fat_target_g,
+                        daily_carbs_target_g=settings.daily_carbs_target_g,
+                    )
+                )
 
             await session.commit()
 

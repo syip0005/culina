@@ -63,6 +63,7 @@
 - `UserService` — CRUD, soft delete (deleted_at), filtering, restores
 - `NutritionEntryService` — list, text search (trigram), vector search (embedding), create, override
 - `EmbeddingService` — wraps pydantic-ai Embedder via OpenRouter
+- `SummaryService` — daily nutrition aggregation + period stats (week/fortnight/month/year) with on-target evaluation using configurable goal modes
 - `SuggestionService` — orchestrates ordered list of `SuggestionStrategy` implementations, deduplicates, hydrates IDs via `nutrition_entry_from_orm`
 - `service/suggestion/` — strategy pattern package: `FrequencySuggestionStrategy` (user's top items per meal_type), `PopularSuggestionStrategy` (global popularity), `RandomSuggestionStrategy` (final fallback)
 - `converters.py` — ORM ↔ Pydantic domain model conversion (keep domain models free of SQLAlchemy imports)

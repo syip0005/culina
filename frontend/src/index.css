@@ -659,6 +659,122 @@ label {
   margin-top: 0.2rem;
 }
 
+/* Stats page */
+.stats-period-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.stats-period-selector button {
+  flex: 1;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.5rem;
+}
+
+.stats-headline {
+  text-align: center;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+  border: var(--border);
+}
+
+.stats-headline-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+
+.stats-headline-sep {
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin: 0 0.2rem;
+  color: var(--color-muted);
+}
+
+.stats-headline-total {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--color-muted);
+}
+
+.stats-headline-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  margin-top: 0.25rem;
+}
+
+.stats-daily {
+  border: var(--border);
+  margin-bottom: 1rem;
+}
+
+.stats-day-row {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.8rem;
+}
+
+.stats-day-row:last-child {
+  border-bottom: none;
+}
+
+.stats-day-empty {
+  opacity: 0.4;
+}
+
+.stats-day-label {
+  font-weight: 700;
+  width: 3.5rem;
+  flex-shrink: 0;
+}
+
+.stats-day-macros {
+  flex: 1;
+  text-align: right;
+  font-size: 0.75rem;
+  margin-right: 0.75rem;
+}
+
+.stats-day-status {
+  font-weight: 900;
+  width: 1.5rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.stats-day-status.on-target {
+  color: #16a34a;
+}
+
+.stats-day-status.off-target {
+  color: #dc2626;
+}
+
+.stats-averages {
+  border: var(--border);
+  padding: 0.75rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.stats-averages-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  margin-bottom: 0.25rem;
+}
+
+.stats-averages-values {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
 /* Added state */
 .added {
   opacity: 0.5;

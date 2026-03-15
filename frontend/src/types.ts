@@ -119,6 +119,26 @@ export interface DailySummaryResponse {
   remaining: Macros
 }
 
+export interface DayStats {
+  date: string
+  consumed: Macros
+  targets: Macros
+  on_target: boolean
+}
+
+export interface PeriodStatsResponse {
+  period: string
+  start_date: string
+  end_date: string
+  days_in_period: number
+  days_logged: number
+  days_on_target: number
+  average_consumed: Macros
+  daily: DayStats[]
+}
+
+export type GoalMode = 'under' | 'over' | 'within'
+
 export function isSearchNutritionInfo(
   item: SearchNutritionInfo | SearchNutritionNotFound,
 ): item is SearchNutritionInfo {

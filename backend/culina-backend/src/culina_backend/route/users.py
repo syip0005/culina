@@ -40,13 +40,13 @@ async def update_settings(
     body: UpdateSettingsRequest,
     user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
-) -> User:
+) -> UserSettings:
     """Update the authenticated user's settings."""
     data = body.model_dump(exclude_unset=True)
     if not data:
-        return user
+        return user.settings or UserSettings()
     updated = await user_service.update_settings(user.id, data)
-    return updated
+    return updated.settings or UserSettings()
 
 
 @router.delete("/me", status_code=204)

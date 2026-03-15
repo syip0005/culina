@@ -5,7 +5,7 @@
 - `src/routes/` — TanStack Router file-based routes (auto-generates `routeTree.gen.ts`)
 - `src/routes/__root.tsx` — root layout, wraps app in AuthProvider
 - `src/routes/_authenticated.tsx` — layout guard that redirects unauthenticated users to `/login`
-- `src/routes/_authenticated/` — protected pages (home `/`, settings `/settings`)
+- `src/routes/_authenticated/` — protected pages (home `/`, settings `/settings`, stats `/stats`)
 - `src/components/` — shared React components
 - `src/utils/` — utility hooks and helpers
 - `src/api.ts` — typed API client, all backend calls go through `request<T>()`
@@ -88,3 +88,4 @@
 - `POST /lookup/` — AI nutrition lookup (multi-turn)
 - `GET /suggestions/?meal_type=&limit=` — food item suggestions (eager-loaded on mount for all 4 meal types)
 - `GET /summary/daily?date=` — daily macro summary
+- `GET /summary/stats?period=&date=` — period stats (week/fortnight/month/year)

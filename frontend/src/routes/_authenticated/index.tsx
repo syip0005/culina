@@ -291,6 +291,8 @@ function HomePage() {
       <div className="header">
         <h1>Culina<span className="alpha-tag">ALPHA</span></h1>
         <div className="header-actions">
+          <Link to="/stats">Stats</Link>
+          <span className="header-sep">/</span>
           <Link to="/settings">Settings</Link>
           <span className="header-sep">/</span>
           <button className="link-button" onClick={signOut}>Logout</button>

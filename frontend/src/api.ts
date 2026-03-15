@@ -6,6 +6,7 @@ import type {
   NutritionEntry,
   LookupResponse,
   DailySummaryResponse,
+  PeriodStatsResponse,
 } from './types.ts'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -107,6 +108,12 @@ export function lookup(data: { text: string; conversation_id?: string }) {
 export function getDailySummary(date?: string) {
   const qs = date ? `?date=${date}` : ''
   return request<DailySummaryResponse>('GET', `/summary/daily${qs}`)
+}
+
+export function getPeriodStats(period: string, date?: string) {
+  const qs = new URLSearchParams({ period })
+  if (date) qs.set('date', date)
+  return request<PeriodStatsResponse>('GET', `/summary/stats?${qs}`)
 }
 
 export function getSuggestions(mealType: string, limit = 10) {

@@ -154,3 +154,21 @@ class DailySummaryResponse(BaseModel):
     consumed: Macros
     targets: Macros
     remaining: Macros
+
+
+class DayStats(BaseModel):
+    date: str  # ISO date "2026-03-15"
+    consumed: Macros
+    targets: Macros
+    on_target: bool
+
+
+class PeriodStatsResponse(BaseModel):
+    period: str  # "week", "fortnight", "month", "year"
+    start_date: str  # ISO date for period start
+    end_date: str  # ISO date for period end (inclusive)
+    days_in_period: int
+    days_logged: int  # days with at least one meal
+    days_on_target: int
+    average_consumed: Macros  # average over logged days only
+    daily: list[DayStats]  # one entry per day in period
