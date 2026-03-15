@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../auth.tsx'
 import { useDebounce } from '../utils/debounce.ts'
-import { searchEntries, addMealItem, createMeal } from '../api.ts'
+import { searchEntries, addMealItem, createMeal, deleteNutritionEntry } from '../api.ts'
 import { NutritionSummary } from './NutritionSummary.tsx'
 import { LookupView } from './LookupView.tsx'
 import type { Meal, MealType, NutritionEntry, ServingUnit } from '../types.ts'
@@ -38,6 +38,8 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
   const [showLookup, setShowLookup] = useState(false)
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [adding, setAdding] = useState<{ entry: NutritionEntry; value: string } | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const debouncedQuery = useDebounce(query, 300)
 
@@ -80,6 +82,18 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
     })
     setMeal(created)
     return created
+  }
+
+  const handleDelete = async (entry: NutritionEntry) => {
+    setDeleteError(null)
+    try {
+      await deleteNutritionEntry(entry.id)
+      setResults((prev) => prev.filter((e) => e.id !== entry.id))
+      setDeletingId(null)
+    } catch {
+      setDeleteError(entry.id)
+      setDeletingId(null)
+    }
   }
 
   const handleSelect = (entry: NutritionEntry) => {
@@ -145,18 +159,49 @@ export function AddItemPanel({ mealType, meal: initialMeal, onClose, onItemAdded
             const isAdded = addedIds.has(entry.id)
             const isAddingThis = adding?.entry.id === entry.id
             const scalable = isScalableUnit(entry.serving_unit)
+            const isOwned = entry.user_id === user?.id
+            const isConfirmingDelete = deletingId === entry.id
 
             return (
               <div
                 key={entry.id}
-                className={`search-result ${isAdded ? 'added' : ''}`}
+                className={`search-result ${isAdded ? 'added' : ''} ${isOwned && !isAdded ? 'search-result-owned' : ''}`}
                 onClick={() => !isAdded && !isAddingThis && handleSelect(entry)}
                 style={{ cursor: isAdded || isAddingThis ? 'default' : 'pointer' }}
               >
-                <div className="search-result-name">
-                  {entry.food_item}
-                  {isAdded && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>ADDED</span>}
+                <div className="search-result-top">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="search-result-name">
+                      {entry.food_item}
+                      {isAdded && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>ADDED</span>}
+                    </div>
+                  </div>
+                  {isOwned && !isAdded && (
+                    <button
+                      className="btn-delete-entry"
+                      onClick={(e) => { e.stopPropagation(); setDeleteError(null); setDeletingId(isConfirmingDelete ? null : entry.id) }}
+                      title="Delete entry"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
+                {isConfirmingDelete && (
+                  <div className="delete-confirm" onClick={(e) => e.stopPropagation()}>
+                    <span className="text-xs">Delete this entry?</span>
+                    <button onClick={() => handleDelete(entry)} style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }}>
+                      Yes
+                    </button>
+                    <button className="secondary" onClick={() => setDeletingId(null)} style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }}>
+                      No
+                    </button>
+                  </div>
+                )}
+                {deleteError === entry.id && (
+                  <div className="delete-error text-xs" onClick={(e) => e.stopPropagation()}>
+                    Can't delete — used in a meal
+                  </div>
+                )}
                 {entry.brand && <div className="search-result-brand">{entry.brand}</div>}
                 <div className="search-result-serving">
                   {servingLabel(entry.serving_amount, entry.serving_unit, entry.serving_description)}

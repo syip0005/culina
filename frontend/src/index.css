@@ -136,6 +136,18 @@ label {
   margin-bottom: 2rem;
 }
 
+.alpha-tag {
+  display: inline-block;
+  font-size: 0.45em;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  border: 2px solid var(--color-fg);
+  padding: 0.1em 0.4em;
+  margin-left: 0.5em;
+  vertical-align: super;
+  line-height: 1;
+}
+
 .auth-buttons {
   display: flex;
   flex-direction: column;
@@ -505,6 +517,50 @@ label {
 .btn-delete:hover {
   color: var(--color-fg);
   background: none;
+}
+
+/* Search result with delete support */
+.search-result-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.search-result-owned .btn-delete-entry {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.search-result-owned:hover .btn-delete-entry {
+  opacity: 1;
+}
+
+.btn-delete-entry {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 1rem;
+  padding: 0.1rem 0.4rem;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.btn-delete-entry:hover {
+  color: var(--color-fg);
+  background: none;
+}
+
+.delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.delete-error {
+  color: #b91c1c;
+  margin-top: 0.2rem;
 }
 
 /* Added state */

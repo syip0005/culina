@@ -10,6 +10,7 @@ from culina_backend.service.errors import (
     ConversationLimitError,
     DuplicateError,
     ForbiddenError,
+    InUseError,
     NotFoundError,
 )
 
@@ -32,6 +33,10 @@ def handle_service_errors(func: Callable) -> Callable:
                 status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)
             ) from exc
         except DuplicateError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
+        except InUseError as exc:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=str(exc)
             ) from exc

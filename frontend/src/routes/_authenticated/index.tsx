@@ -274,7 +274,7 @@ function HomePage() {
   return (
     <div className="container">
       <div className="header">
-        <h1>Culina</h1>
+        <h1>Culina<span className="alpha-tag">ALPHA</span></h1>
         <Link to="/settings">Settings</Link>
       </div>
 

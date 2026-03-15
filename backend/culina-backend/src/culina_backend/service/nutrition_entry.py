@@ -4,6 +4,7 @@ from typing import Literal
 from uuid import UUID
 
 from sqlalchemy import bindparam, func, select, type_coerce
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.types import Float
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -19,7 +20,7 @@ from culina_backend.service.converters import (
     nutrition_entry_to_orm,
 )
 from culina_backend.service.embedding import EmbeddingService
-from culina_backend.service.errors import ForbiddenError, NotFoundError
+from culina_backend.service.errors import ForbiddenError, InUseError, NotFoundError
 
 
 class NutritionEntryService:
@@ -165,7 +166,11 @@ class NutritionEntryService:
                 raise NotFoundError(f"Entry {entry_id} not found")
             if row.user_id != user_id:
                 raise ForbiddenError("Can only delete your own entries")
-            await session.delete(row)
+            try:
+                await session.delete(row)
+                await session.flush()
+            except IntegrityError:
+                raise InUseError("Entry is used in a meal and cannot be deleted")
             await session.commit()
 
     async def search_entries(

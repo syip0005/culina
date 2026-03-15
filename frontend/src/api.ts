@@ -35,6 +35,7 @@ async function request<T>(
     const text = await res.text()
     throw new Error(`${res.status}: ${text}`)
   }
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
@@ -93,6 +94,10 @@ export function createNutritionEntry(data: {
 
 export function getEntry(id: string) {
   return request<NutritionEntry>('GET', `/nutrition-entries/${id}`)
+}
+
+export function deleteNutritionEntry(id: string) {
+  return request<void>('DELETE', `/nutrition-entries/${id}`)
 }
 
 export function lookup(data: { text: string; conversation_id?: string }) {
