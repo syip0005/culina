@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from culina_backend.config import secrets
 from culina_backend.logging import request_id_var, setup_logging
 from culina_backend.route.auth import router as auth_router
 from culina_backend.route.lookup import router as lookup_router
@@ -57,13 +58,23 @@ app = FastAPI(title="Culina")
 
 app.add_middleware(RequestLoggingMiddleware)
 
+_DEV_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
+_cors_origins = (
+    _DEV_ORIGINS
+    if secrets.ENV == "dev"
+    else [o.strip() for o in secrets.CORS_ORIGINS.split(",") if o.strip()]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000",
-                   "http://localhost:3001", "http://127.0.0.1:3001",],
+    allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["content-type", "authorization"],
 )
 
 app.include_router(auth_router)
