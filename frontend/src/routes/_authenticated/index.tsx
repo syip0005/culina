@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth } from '../../auth.tsx'
-import { getDailySummary, listMeals, getEntry, updateSettings, getSuggestions } from '../../api.ts'
+import { getDailySummary, listMeals, getEntry, updateSettings, getSuggestions, getPeriodStats } from '../../api.ts'
+import { refetch } from '../../utils/prefetch.ts'
 import { dateRange, todayDateStr, shiftDate, formatDateLabel } from '../../utils/date.ts'
 import { MealSection } from '../../components/MealSection.tsx'
 import { AddItemPanel } from '../../components/AddItemPanel.tsx'
@@ -13,6 +14,11 @@ export const Route = createFileRoute('/_authenticated/')({
 })
 
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snacks']
+
+// Module-level caches — survive component unmounts (route navigation)
+const dayCache = new Map<string, DayData>()
+const suggestionsCache: { data: Record<MealType, NutritionEntry[]> | null; ts: number } = { data: null, ts: 0 }
+const SUGGESTIONS_MAX_AGE = 5 * 60_000 // 5 minutes
 
 function currentMealType(tz: string): MealType {
   const hour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false }).format(new Date()), 10)
@@ -37,20 +43,18 @@ function HomePage() {
   const today = todayDateStr(tz)
 
   const [currentDate, setCurrentDate] = useState(today)
-  const [summary, setSummary] = useState<DailySummaryResponse | null>(null)
-  const [mealsByType, setMealsByType] = useState<Record<MealType, Meal | null>>({
-    breakfast: null, lunch: null, dinner: null, snacks: null,
-  })
+  const cachedToday = dayCache.get(today)
+  const [summary, setSummary] = useState<DailySummaryResponse | null>(cachedToday?.summary ?? null)
+  const [mealsByType, setMealsByType] = useState<Record<MealType, Meal | null>>(
+    cachedToday?.mealsByType ?? { breakfast: null, lunch: null, dinner: null, snacks: null }
+  )
   const [entries, setEntries] = useState<Map<string, NutritionEntry>>(new Map())
   const [addingFor, setAddingFor] = useState<MealType | null>(null)
-  const [suggestionsByType, setSuggestionsByType] = useState<Record<MealType, NutritionEntry[]>>({
-    breakfast: [], lunch: [], dinner: [], snacks: [],
-  })
-  const [loading, setLoading] = useState(true)
+  const [suggestionsByType, setSuggestionsByType] = useState<Record<MealType, NutritionEntry[]>>(
+    suggestionsCache.data ?? { breakfast: [], lunch: [], dinner: [], snacks: [] }
+  )
+  const [loading, setLoading] = useState(!cachedToday)
   const [sliding, setSliding] = useState<'left' | 'right' | null>(null)
-
-  // Cache for preloaded days
-  const cache = useRef<Map<string, DayData>>(new Map())
 
   const fetchDay = useCallback(async (dateStr: string): Promise<DayData> => {
     const { start, end } = dateRange(dateStr, tz)
@@ -106,27 +110,27 @@ function HomePage() {
   const preload = useCallback((dateStr: string) => {
     for (const offset of [-1, -2]) {
       const d = shiftDate(dateStr, offset)
-      if (!cache.current.has(d)) {
-        fetchDay(d).then((data) => cache.current.set(d, data))
+      if (!dayCache.has(d)) {
+        fetchDay(d).then((data) => dayCache.set(d, data))
       }
     }
   }, [fetchDay])
 
   const loadData = useCallback(async () => {
     const target = currentDate
-    const cached = cache.current.get(target)
+    const cached = dayCache.get(target)
     if (cached) {
       applyDay(cached)
       // Refresh in background for today to keep data fresh
       if (target === today) {
         fetchDay(target).then((data) => {
-          cache.current.set(target, data)
+          dayCache.set(target, data)
           applyDay(data)
         })
       }
     } else {
       const data = await fetchDay(target)
-      cache.current.set(target, data)
+      dayCache.set(target, data)
       applyDay(data)
     }
     preload(target)
@@ -136,11 +140,18 @@ function HomePage() {
     loadData()
   }, [loadData])
 
-  // Eager-load suggestions for all meal types once on mount
+  // Load suggestions — use module-level cache to avoid refetch on route navigation
   useEffect(() => {
+    if (suggestionsCache.data && Date.now() - suggestionsCache.ts < SUGGESTIONS_MAX_AGE) {
+      setSuggestionsByType(suggestionsCache.data)
+      return
+    }
     Promise.all(MEAL_TYPES.map((mt) => getSuggestions(mt))).then(
       ([breakfast, lunch, dinner, snacks]) => {
-        setSuggestionsByType({ breakfast, lunch, dinner, snacks })
+        const data = { breakfast, lunch, dinner, snacks }
+        suggestionsCache.data = data
+        suggestionsCache.ts = Date.now()
+        setSuggestionsByType(data)
       },
     )
   }, [])
@@ -149,7 +160,7 @@ function HomePage() {
     if (addingFor) return // don't navigate while adding items
     const next = shiftDate(currentDate, direction)
     // Invalidate cache for the day we're leaving if it's today (could be stale)
-    if (currentDate === today) cache.current.delete(currentDate)
+    if (currentDate === today) dayCache.delete(currentDate)
     setSliding(direction === -1 ? 'left' : 'right')
     setCurrentDate(next)
     // Clear slide animation after it plays
@@ -201,8 +212,14 @@ function HomePage() {
     return () => window.removeEventListener('keydown', handler)
   }, [navigate, addingFor])
 
+  // Background-refetch stats so they're fresh when navigating to /stats
+  const refetchStats = useCallback(() => {
+    refetch('stats:week', () => getPeriodStats('week'))
+  }, [])
+
   const handleOptimisticDelete = useCallback((macros: { energy_kj: number; protein_g: number; fat_g: number; carbs_g: number }) => {
-    cache.current.delete(currentDate)
+    dayCache.delete(currentDate)
+    refetchStats()
     setSummary((prev) => {
       if (!prev) return prev
       return {
@@ -221,10 +238,11 @@ function HomePage() {
         },
       }
     })
-  }, [currentDate])
+  }, [currentDate, refetchStats])
 
   const handleOptimisticAdd = useCallback((mealType: MealType, entry: NutritionEntry, quantity: number) => {
-    cache.current.delete(currentDate)
+    dayCache.delete(currentDate)
+    refetchStats()
     setSummary((prev) => {
       if (!prev) return prev
       return {
@@ -279,7 +297,7 @@ function HomePage() {
         },
       }
     })
-  }, [currentDate])
+  }, [currentDate, refetchStats])
 
   if (loading) return <div className="container">LOADING...</div>
 
