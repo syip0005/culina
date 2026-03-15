@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth } from '../../auth.tsx'
-import { getDailySummary, listMeals, getEntry } from '../../api.ts'
+import { getDailySummary, listMeals, getEntry, updateSettings } from '../../api.ts'
 import { dateRange, todayDateStr, shiftDate, formatDateLabel } from '../../utils/date.ts'
 import { MealSection } from '../../components/MealSection.tsx'
 import { AddItemPanel } from '../../components/AddItemPanel.tsx'
@@ -31,6 +31,9 @@ function HomePage() {
   const { user } = useAuth()
   const tz = user?.settings?.timezone ?? 'Australia/Sydney'
   const eUnit = user?.settings?.preferred_energy_unit ?? 'kj'
+  const [showRemaining, setShowRemaining] = useState(
+    () => (user?.settings?.extra?.summary_display as string) !== 'consumed'
+  )
   const today = todayDateStr(tz)
 
   const [currentDate, setCurrentDate] = useState(today)
@@ -293,32 +296,44 @@ function HomePage() {
         <button className="day-nav-btn" onClick={() => navigate(1)} aria-label="Next day">&rarr;</button>
       </div>
 
-      {summary && (
-        <div className="summary-bar">
-          <div className="summary-item">
-            <div className="value">{displayEnergy(summary.remaining.energy_kj, eUnit)}</div>
-            <div className="label">Remaining {energyLabel(eUnit)}</div>
-          </div>
-          <div className="summary-item">
-            <div className="value">{Math.round(summary.remaining.protein_g)}</div>
-            <div className="label">Protein g</div>
-          </div>
-          <div className="summary-item">
-            <div className="value">{Math.round(summary.remaining.fat_g)}</div>
-            <div className="label">Fat g</div>
-          </div>
-          <div className="summary-item">
-            <div className="value">{Math.round(summary.remaining.carbs_g)}</div>
-            <div className="label">Carbs g</div>
-          </div>
-        </div>
-      )}
-
-      {summary && (
-        <div style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '1rem', textAlign: 'center' }}>
-          Consumed: {displayEnergy(summary.consumed.energy_kj, eUnit)} {energyLabel(eUnit)} | {Math.round(summary.consumed.protein_g)}p | {Math.round(summary.consumed.fat_g)}f | {Math.round(summary.consumed.carbs_g)}c
-        </div>
-      )}
+      {summary && (() => {
+        const primary = showRemaining ? summary.remaining : summary.consumed
+        const secondary = showRemaining ? summary.consumed : summary.remaining
+        const primaryLabel = showRemaining ? 'Remaining' : 'Consumed'
+        const secondaryLabel = showRemaining ? 'Consumed' : 'Remaining'
+        const toggleDisplay = () => {
+          const next = !showRemaining
+          setShowRemaining(next)
+          const val = next ? 'remaining' : 'consumed'
+          updateSettings({ extra: { ...user?.settings?.extra, summary_display: val } })
+        }
+        return (
+          <>
+            <div className="summary-bar">
+              <div className="summary-toggle" onClick={toggleDisplay} aria-label="Toggle remaining/consumed">&#8693;</div>
+              <div className="summary-item">
+                <div className="value">{displayEnergy(primary.energy_kj, eUnit)}</div>
+                <div className="label">{primaryLabel} {energyLabel(eUnit)}</div>
+              </div>
+              <div className="summary-item">
+                <div className="value">{Math.round(primary.protein_g)}</div>
+                <div className="label">Protein g</div>
+              </div>
+              <div className="summary-item">
+                <div className="value">{Math.round(primary.fat_g)}</div>
+                <div className="label">Fat g</div>
+              </div>
+              <div className="summary-item">
+                <div className="value">{Math.round(primary.carbs_g)}</div>
+                <div className="label">Carbs g</div>
+              </div>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginBottom: '1rem', textAlign: 'center' }}>
+              {secondaryLabel}: {displayEnergy(secondary.energy_kj, eUnit)} {energyLabel(eUnit)} | {Math.round(secondary.protein_g)}p | {Math.round(secondary.fat_g)}f | {Math.round(secondary.carbs_g)}c
+            </div>
+          </>
+        )
+      })()}
 
       {MEAL_TYPES.map((mt) => (
         <MealSection

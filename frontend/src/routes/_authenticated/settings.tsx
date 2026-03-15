@@ -44,6 +44,7 @@ function SettingsPage() {
         daily_carbs_target_g: carbsTarget ? parseFloat(carbsTarget) : null,
         timezone,
         preferred_energy_unit: energyUnit,
+        extra: settings?.extra,
       })
       setSettings(updated)
     } catch (e) {
